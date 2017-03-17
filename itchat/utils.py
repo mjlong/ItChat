@@ -1,4 +1,5 @@
 import re, os, sys, subprocess, copy, traceback, logging
+from os import path
 
 try:
     from HTMLParser import HTMLParser
@@ -80,7 +81,16 @@ def print_qr(fileDir):
     if config.OS == 'Darwin':
         subprocess.call(['open', fileDir])
     elif config.OS == 'Linux':
-        subprocess.call(['xdg-open', fileDir])
+        try:
+            __IPYTHON__
+        except NameError:
+            #"Not in IPython"
+            subprocess.call(['xdg-open', fileDir])
+        else:
+            logger.info('...xdg-open unavailable,'+ \
+                        'please open file '+ \
+                        path.abspath(path.dirname(fileDir))+'/'+fileDir\
+                        +' to scan')
     else:
         os.startfile(fileDir)
 
