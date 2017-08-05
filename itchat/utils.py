@@ -77,6 +77,37 @@ def check_file(fileDir):
     except:
         return False
 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+def send_qr(fileDir):
+
+    f = open(os.environ['SESCRED'],'r');
+    emailcrd = {};
+    ks = f.readline().strip().split(',');
+    vs = f.readline().strip().split(',');
+    for i in range(len(ks)):
+        emailcrd[ks[i]] = vs[i];
+    f.close();
+
+    msg = MIMEMultipart();
+    msg['Subject'] = 'WeChat Login';
+    msg['From'] = emailcrd['SENDER_EMAIL']; 
+    msg['To'] = emailcrd['RECEIVER_EMAIL']; 
+    text = MIMEText("Scan the attached QR code to login wechat"); 
+    msg.attach(text);
+    img_data = open(fileDir, 'rb').read();
+    image = MIMEImage(img_data, name=os.path.basename(fileDir));
+    msg.attach(image);
+
+    s = smtplib.SMTP(emailcrd['EMAIL_HOST'],emailcrd['EMAIL_PORT']);  
+    s.starttls(); 
+    s.login(emailcrd['EMAIL_HOST_USER'],emailcrd['EMAIL_HOST_PASSWORD']); 
+    s.sendmail(msg['From'], [msg['To']], msg.as_string());
+    s.quit();
+
+
 def print_qr(fileDir):
     if config.OS == 'Darwin':
         subprocess.call(['open', fileDir])
@@ -85,7 +116,9 @@ def print_qr(fileDir):
             __IPYTHON__
         except NameError:
             #"Not in IPython"
-            subprocess.call(['xdg-open', fileDir])
+            logger.info('scan '+fileDir+'to login');
+            #subprocess.call(['xdg-open', fileDir])
+            send_qr(fileDir);
         else:
             logger.info('...xdg-open unavailable,'+ \
                         'please open file '+ \
