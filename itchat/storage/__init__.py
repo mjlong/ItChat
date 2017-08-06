@@ -1,10 +1,7 @@
 import os, time, copy
-try:
-    import Queue
-except ImportError:
-    import queue as Queue
 from threading import Lock
 
+from .messagequeue import Queue
 from .templates import (
     ContactList, AbstractUserDict, User,
     MassivePlatform, Chatroom, ChatroomMember)
@@ -23,7 +20,7 @@ class Storage(object):
         self.memberList        = ContactList()
         self.mpList            = ContactList()
         self.chatroomList      = ContactList()
-        self.msgList           = Queue.Queue(-1)
+        self.msgList           = Queue(-1)
         self.lastInputUserName = None
         self.memberList.set_default_value(contactClass=User)
         self.memberList.core = core
@@ -51,6 +48,16 @@ class Storage(object):
         del self.chatroomList[:]
         for i in j.get('chatroomList', []):
             self.chatroomList.append(i)
+        # I tried to solve everything in pickle
+        # but this way is easier and more storage-saving
+        for chatroom in self.chatroomList:
+            if 'MemberList' in chatroom:
+                for member in chatroom['MemberList']:
+                    member.core = chatroom.core
+                    member.chatroom = chatroom
+            if 'Self' in chatroom:
+                chatroom['Self'].core = chatroom.core
+                chatroom['Self'].chatroom = chatroom
         self.lastInputUserName = j.get('lastInputUserName', None)
     def search_friends(self, name=None, userName=None, remarkName=None, nickName=None,
             wechatAccount=None):

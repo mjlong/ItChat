@@ -7,6 +7,7 @@ import requests
 from .. import config, utils
 from ..returnvalues import ReturnValue
 from ..storage import contact_change, templates
+from ..utils import update_info_dict
 
 logger = logging.getLogger('itchat')
 
@@ -98,16 +99,6 @@ def update_friend(self, userName):
         for f in friendList]
     return r if len(r) != 1 else r[0]
 
-def update_info_dict(oldInfoDict, newInfoDict):
-    ''' only normal values will be updated here
-        because newInfoDict is normal dict, so it's not necessary to consider templates
-    '''
-    for k, v in newInfoDict.items():
-        if any((isinstance(v, t) for t in (tuple, list, dict))):
-            pass # these values will be updated somewhere else
-        elif oldInfoDict.get(k) is None or v not in (None, '', '0', 0):
-            oldInfoDict[k] = v
-
 @contact_change
 def update_local_chatrooms(core, l):
     '''
@@ -118,8 +109,12 @@ def update_local_chatrooms(core, l):
         # format new chatrooms
         utils.emoji_formatter(chatroom, 'NickName')
         for member in chatroom['MemberList']:
-            utils.emoji_formatter(member, 'NickName')
-            utils.emoji_formatter(member, 'DisplayName')
+            if 'NickName' in member:
+                utils.emoji_formatter(member, 'NickName')
+            if 'DisplayName' in member:
+                utils.emoji_formatter(member, 'DisplayName')
+            if 'RemarkName' in member:
+                utils.emoji_formatter(member, 'RemarkName')
         # update it to old chatrooms
         oldChatroom = utils.search_dict_list(
             core.chatroomList, 'UserName', chatroom['UserName'])
@@ -127,7 +122,7 @@ def update_local_chatrooms(core, l):
             update_info_dict(oldChatroom, chatroom)
             #  - update other values
             memberList = chatroom.get('MemberList', [])
-            oldMemberList = oldChatroom.memberList
+            oldMemberList = oldChatroom['MemberList']
             if memberList:
                 for member in memberList:
                     oldMember = utils.search_dict_list(
@@ -137,8 +132,9 @@ def update_local_chatrooms(core, l):
                     else:
                         oldMemberList.append(member)
         else:
-            oldChatroom = templates.wrap_user_dict(chatroom)
-            core.chatroomList.append(oldChatroom)
+            core.chatroomList.append(chatroom)
+            oldChatroom = utils.search_dict_list(
+                core.chatroomList, 'UserName', chatroom['UserName'])
         # delete useless members
         if len(chatroom['MemberList']) != len(oldChatroom['MemberList']) and \
                 chatroom['MemberList']:
@@ -154,16 +150,16 @@ def update_local_chatrooms(core, l):
         if oldChatroom.get('ChatRoomOwner') and oldChatroom.get('MemberList'):
             oldChatroom['OwnerUin'] = utils.search_dict_list(oldChatroom['MemberList'],
                 'UserName', oldChatroom['ChatRoomOwner']).get('Uin', 0)
-        #  - update isAdmin
+        #  - update IsAdmin
         if 'OwnerUin' in oldChatroom and oldChatroom['OwnerUin'] != 0:
-            oldChatroom['isAdmin'] = \
+            oldChatroom['IsAdmin'] = \
                 oldChatroom['OwnerUin'] == int(core.loginInfo['wxuin'])
         else:
-            oldChatroom['isAdmin'] = None
-        #  - update self
+            oldChatroom['IsAdmin'] = None
+        #  - update Self
         newSelf = utils.search_dict_list(oldChatroom['MemberList'],
             'UserName', core.storageClass.userName)
-        oldChatroom['self'] = newSelf or copy.deepcopy(core.loginInfo['User'])
+        oldChatroom['Self'] = newSelf or copy.deepcopy(core.loginInfo['User'])
     return {
         'Type'         : 'System',
         'Text'         : [chatroom['UserName'] for chatroom in l],
@@ -182,6 +178,8 @@ def update_local_friends(core, l):
             utils.emoji_formatter(friend, 'NickName')
         if 'DisplayName' in friend:
             utils.emoji_formatter(friend, 'DisplayName')
+        if 'RemarkName' in friend:
+            utils.emoji_formatter(friend, 'RemarkName')
         oldInfoDict = utils.search_dict_list(
             fullList, 'UserName', friend['UserName'])
         if oldInfoDict is None:
@@ -236,7 +234,8 @@ def update_local_uin(core, msg):
                         if newChatroomDict is None:
                             newChatroomDict = utils.struct_friend_info({
                                 'UserName': username,
-                                'Uin': uin, })
+                                'Uin': uin, 
+                                'Self': copy.deepcopy(core.loginInfo['User'])})
                             core.chatroomList.append(newChatroomDict)
                         else:
                             newChatroomDict['Uin'] = uin
@@ -407,7 +406,7 @@ def get_head_img(self, userName=None, chatroomUserName=None, picDir=None):
                     'Ret': -1001, }})
             if 'EncryChatRoomId' in chatroom:
                 params['chatroomid'] = chatroom['EncryChatRoomId']
-            params['chatroomid'] =  params['chatroomid'] or chatroom['UserName']
+            params['chatroomid'] =  params.get('chatroomid') or chatroom['UserName']
     headers = { 'User-Agent' : config.USER_AGENT }
     r = self.s.get(url, params=params, stream=True, headers=headers)
     tempStorage = io.BytesIO()
