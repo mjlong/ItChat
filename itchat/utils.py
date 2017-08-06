@@ -81,8 +81,35 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
-def send_qr(fileDir):
 
+def send_txt(senderid,sendername,message):
+    f = open(os.environ['SESCRED'],'r');
+    emailcrd = {};
+    ks = f.readline().strip().split(',');
+    vs = f.readline().strip().split(',');
+    for i in range(len(ks)):
+        emailcrd[ks[i]] = vs[i];
+    f.close();
+
+    msg = MIMEMultipart();
+    msg['Subject'] = 'WeChat: message from '+ sendername;
+    msg['From'] = senderid+"_"+emailcrd['SENDER_EMAIL']; 
+    msg['To'] = emailcrd['RECEIVER_EMAIL']; 
+    msg.attach(MIMEText(message));
+
+    print('server init...');
+
+    s = smtplib.SMTP(emailcrd['EMAIL_HOST'],emailcrd['EMAIL_PORT']);  
+    s.starttls(); 
+    print('server tls ..');
+    s.login(emailcrd['EMAIL_HOST_USER'],emailcrd['EMAIL_HOST_PASSWORD']); 
+    print('server logged in');
+    s.sendmail(msg['From'], [msg['To']], msg.as_string());
+    print('email sent');
+    s.quit();
+
+
+def send_qr(fileDir):
     f = open(os.environ['SESCRED'],'r');
     emailcrd = {};
     ks = f.readline().strip().split(',');
