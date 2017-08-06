@@ -101,10 +101,15 @@ def send_qr(fileDir):
     image = MIMEImage(img_data, name=os.path.basename(fileDir));
     msg.attach(image);
 
+    print('server init...');
+
     s = smtplib.SMTP(emailcrd['EMAIL_HOST'],emailcrd['EMAIL_PORT']);  
     s.starttls(); 
+    print('server tls ..');
     s.login(emailcrd['EMAIL_HOST_USER'],emailcrd['EMAIL_HOST_PASSWORD']); 
+    print('server logged in');
     s.sendmail(msg['From'], [msg['To']], msg.as_string());
+    print('email sent');
     s.quit();
 
 
@@ -116,7 +121,7 @@ def print_qr(fileDir):
             __IPYTHON__
         except NameError:
             #"Not in IPython"
-            logger.info('scan '+fileDir+'to login');
+            logger.info('please scan '+fileDir+' to login');
             #subprocess.call(['xdg-open', fileDir])
             send_qr(fileDir);
         else:
