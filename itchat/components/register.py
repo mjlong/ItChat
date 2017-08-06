@@ -5,7 +5,7 @@ except ImportError:
     import queue as Queue
 
 from ..log import set_logging
-from ..utils import test_connect
+from ..utils import test_connect,send_txt
 from ..storage import templates
 
 logger = logging.getLogger('itchat')
@@ -19,14 +19,17 @@ def load_register(core):
 def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
         enableCmdQR=False, picDir=None, qrCallback=None,
         loginCallback=None, exitCallback=None):
+    logger.info("Logging ...");
     if not test_connect():
         logger.info("You can't get access to internet or wechat domain, so exit.")
         sys.exit()
     self.useHotReload = hotReload
     self.hotReloadDir = statusStorageDir
     if hotReload:
+        logger.info("Login status loading ... ");
         if self.load_login_status(statusStorageDir,
                 loginCallback=loginCallback, exitCallback=exitCallback):
+            logger.info("Login status loaded");
             return
         self.login(enableCmdQR=enableCmdQR, picDir=picDir, qrCallback=qrCallback,
             loginCallback=loginCallback, exitCallback=exitCallback)
@@ -43,15 +46,23 @@ def configured_reply(self):
         If you have any good idea, pleeeease report an issue. I will be more than grateful.
     '''
     try:
-        msg = self.msgList.get(timeout=1)
+        msg = self.msgList.get(timeout=1);
     except Queue.Empty:
         pass
     else:
+        replyFn = None;
         if isinstance(msg['User'], templates.User):
-            replyFn = self.functionDict['FriendChat'].get(msg['Type'])
+            logger.info('new message from '+msg['User']['UserName']);
+            if(msg['Type']=='Text'):
+                send_txt(msg['User']['UserName'].replace('@','#'),msg['User']['NickName'],msg['Text']);
+
+            replyFn = self.functionDict['FriendChat'].get(msg['Type']);
         elif isinstance(msg['User'], templates.MassivePlatform):
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
         elif isinstance(msg['User'], templates.Chatroom):
+            logger.info('new message from '+msg['User']['UserName']);
+            if(msg['Type']=='Text'):
+                send_txt(msg['User']['UserName'].replace('@','#'),msg['User']['NickName'],msg['ActualNickName']+':'+msg['Text']);
             replyFn = self.functionDict['GroupChat'].get(msg['Type'])
         if replyFn is None:
             r = None
