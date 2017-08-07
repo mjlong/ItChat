@@ -66,6 +66,7 @@ class Storage(object):
                 return copy.deepcopy(self.memberList[0]) # my own account
             elif userName: # return the only userName match
                 for m in self.memberList:
+                    print('... searching friends, '+m['UserName']+'<--------->'+m['NickName']);
                     if m['UserName'] == userName:
                         return copy.deepcopy(m)
             else:
@@ -95,6 +96,7 @@ class Storage(object):
         with self.updateLock:
             if userName is not None:
                 for m in self.chatroomList:
+                    print('... searching chatrooms,'+m['UserName']+'<--------->'+m['NickName']);
                     if m['UserName'] == userName:
                         return copy.deepcopy(m)
             elif name is not None:
