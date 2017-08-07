@@ -1,4 +1,4 @@
-import logging, traceback, sys, threading
+import os,logging, traceback, sys, threading
 try:
     import Queue
 except ImportError:
@@ -13,8 +13,10 @@ logger = logging.getLogger('itchat')
 def load_register(core):
     core.auto_login       = auto_login
     core.configured_reply = configured_reply
+    core.configured_send  = configured_send
     core.msg_register     = msg_register
     core.run              = run
+    core.runsend          = runsend
 
 def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
         enableCmdQR=False, picDir=None, qrCallback=None,
@@ -112,3 +114,54 @@ def run(self, debug=False, blockThread=True):
         replyThread = threading.Thread(target=reply_fn)
         replyThread.setDaemon(True)
         replyThread.start()
+
+def runsend(self):
+    logger.info('Start auto sending.')
+    def reply_fn():
+        try:
+            while self.alive:
+                self.configured_send()
+        except KeyboardInterrupt:
+            if self.useHotReload:
+                self.dump_login_status()
+            self.alive = False
+            logger.debug('itchat received an ^C and exit.')
+            logger.info('Bye~')
+    reply_fn()
+
+import email
+def configured_send(self):
+    emaildbpath = os.environ['EMAILDB'];
+    messagefiles = os.listdir(emaildbpath);
+    for filename in messagefiles:
+        realname = emaildbpath+filename;
+        print('processing message from'+realname);
+        f = open(realname,'r');
+        emsg = email.message_from_file(f);
+        f.close();
+        ind = emsg['To'].find('_wechat@');
+        if(-1!=ind):
+            text = [];
+            if emsg.is_multipart():
+                for p in emsg.get_payload():
+                    text.append(p.get_payload(decode=True).decode(p.get_content_charset()));
+            else:
+                text.append(emsg.get_payload(decode=True).decode(emsg.get_content_charset()));
+            text = ''.join(text[0]);
+            print(text);
+            print(text.encode('utf-8'));
+
+            userid = (emsg['To'].replace('#','@'))[:ind];
+            print('userName = '+userid);
+
+            user = None;
+            if('@'==userid[0]):
+                if('@'!=userid[1]):
+                    user = self.search_friends(userName=userid);
+                else:
+                    user = self.search_chatrooms(userName=userid);
+            if(None!=user):
+                user.send(text);
+            os.remove(realname);
+     
+        
