@@ -436,12 +436,20 @@ class Core(object):
             If you have any good idea, pleeeease report an issue. I will be more than grateful.
         '''
         raise NotImplementedError()
+
+
+    def configured_send(self):
+        ''' process to-be-sent messages processed by procmail
+        '''
+        raise NotImplementedError()
+    
     def msg_register(self, msgType,
             isFriendChat=False, isGroupChat=False, isMpChat=False):
         ''' a decorator constructor
             return a specific decorator based on information given
         '''
         raise NotImplementedError()
+
     def run(self, debug=True, blockThread=True):
         ''' start auto respond
             for option
@@ -449,6 +457,12 @@ class Core(object):
             it is defined in components/register.py
         '''
         raise NotImplementedError()
+    def runsend(self):
+        ''' start auto respond
+            it is defined in components/register.py
+        '''
+        raise NotImplementedError()
+    
     def search_friends(self, name=None, userName=None, remarkName=None, nickName=None,
             wechatAccount=None):
         return self.storageClass.search_friends(name, userName, remarkName,
