@@ -58,8 +58,10 @@ load_login_status           = originInstance.load_login_status
 # components.register
 auto_login                  = originInstance.auto_login
 configured_reply            = originInstance.configured_reply
+configured_send             = originInstance.configured_send
 msg_register                = originInstance.msg_register
 run                         = originInstance.run
+runsend                     = originInstance.runsend
 # other functions
 search_friends              = originInstance.search_friends
 search_chatrooms            = originInstance.search_chatrooms
