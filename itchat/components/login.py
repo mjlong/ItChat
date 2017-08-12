@@ -71,6 +71,18 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
     self.web_init()
     self.show_mobile_login()
     self.get_contact(True)
+    
+    text = [];
+    for u in self.memberList:
+        text.append(u['NickName']+'\t'+u['UserName']+'\n');
+    utils.send_txt('search_friends','Friend List',''.join(text));
+
+    text = [];
+    for u in self.chatroomList:
+        text.append(u['NickName']+'\t'+u['UserName']+'\n');
+    utils.send_txt('search_chatrooms','Chatroom List',''.join(text));
+
+
     if hasattr(loginCallback, '__call__'):
         r = loginCallback()
     else:
