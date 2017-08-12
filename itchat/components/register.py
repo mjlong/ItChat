@@ -162,6 +162,22 @@ def configured_send(self):
                     user = self.search_chatrooms(userName=userid);
             if(None!=user):
                 user.send(text);
+            else:
+              text = text.strip();
+              if(-1!= emsg['To'].find('search_friends_wechat@')):
+                users = self.search_friends(nickName=text.strip());
+                for u in users:
+                  send_txt(u['UserName'].replace('@','#'),u['NickName'], 'friend found with alias='+text); 
+                if(0==len(users)):
+                  send_txt('search_friends','friends helper', 'no friend found with alias='+text);  
+              if(-1!= emsg['To'].find('chatrooms_wechat@')):
+                rooms = self.search_chatrooms(name=text);
+                for r in rooms:
+                  send_txt(r['UserName'].replace('@','#'),r['NickName'], 'chatroom found with alias='+text); 
+                if(0==len(rooms)):
+                  send_txt('search_chatrooms','chatrooms helper', 'no chatroom found with alias='+text);  
+ 
             os.remove(realname);
+
      
         
