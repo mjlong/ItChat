@@ -92,7 +92,7 @@ def send_txt(senderid,sendername,message):
     f.close();
 
     msg = MIMEMultipart();
-    msg['Subject'] = 'WeChat: message from '+ sendername;
+    msg['Subject'] = 'WeChat: '+sendername+' sent a message';
     msg['From'] = senderid+"_"+emailcrd['SENDER_EMAIL']; 
     msg['To'] = emailcrd['RECEIVER_EMAIL']; 
     msg.attach(MIMEText(message));
