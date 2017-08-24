@@ -77,69 +77,17 @@ def check_file(fileDir):
     except:
         return False
 
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
-from email.mime.multipart import MIMEMultipart
-
+import utilsgmail
 def send_txt(senderid,sendername,message):
-    f = open(os.environ['SESCRED'],'r');
-    emailcrd = {};
-    ks = f.readline().strip().split(',');
-    vs = f.readline().strip().split(',');
-    for i in range(len(ks)):
-        emailcrd[ks[i]] = vs[i];
-    f.close();
-
-    msg = MIMEMultipart();
-    msg['Subject'] = 'WeChat: '+sendername+' sent a message';
-    msg['From'] = senderid+"_"+emailcrd['SENDER_EMAIL']; 
-    msg['To'] = emailcrd['RECEIVER_EMAIL']; 
-    msg.attach(MIMEText(message));
-
-    print('server init...');
-
-    s = smtplib.SMTP(emailcrd['EMAIL_HOST'],emailcrd['EMAIL_PORT']);  
-    s.starttls(); 
-    print('server tls ..');
-    s.login(emailcrd['EMAIL_HOST_USER'],emailcrd['EMAIL_HOST_PASSWORD']); 
-    print('server logged in');
-    s.sendmail(msg['From'], [msg['To']], msg.as_string());
-    print('email sent');
-    s.quit();
-
+    g = utilsgmail.mygmail();
+    g.send_txt(None,\
+               'WeChat: '+sendername+' sent a message ('+senderid+')', \
+               message);
 
 def send_qr(fileDir):
-    f = open(os.environ['SESCRED'],'r');
-    emailcrd = {};
-    ks = f.readline().strip().split(',');
-    vs = f.readline().strip().split(',');
-    for i in range(len(ks)):
-        emailcrd[ks[i]] = vs[i];
-    f.close();
-
-    msg = MIMEMultipart();
-    msg['Subject'] = 'WeChat Login';
-    msg['From'] = emailcrd['SENDER_EMAIL']; 
-    msg['To'] = emailcrd['RECEIVER_EMAIL']; 
-    text = MIMEText("Scan the attached QR code to login wechat"); 
-    msg.attach(text);
-    img_data = open(fileDir, 'rb').read();
-    image = MIMEImage(img_data, name=os.path.basename(fileDir));
-    msg.attach(image);
-
-    print('server init...');
-
-    s = smtplib.SMTP(emailcrd['EMAIL_HOST'],emailcrd['EMAIL_PORT']);  
-    s.starttls(); 
-    print('server tls ..');
-    s.login(emailcrd['EMAIL_HOST_USER'],emailcrd['EMAIL_HOST_PASSWORD']); 
-    print('server logged in');
-    s.sendmail(msg['From'], [msg['To']], msg.as_string());
-    print('email sent');
-    s.quit();
-
-
+    g = utilsgmail.mygmail();
+    g.send_txtimg(None,'WeChat Login',"Scan the attached QR code to login wechat",fileDir);
+    
 def print_qr(fileDir):
     if config.OS == 'Darwin':
         subprocess.call(['open', fileDir])
