@@ -57,7 +57,7 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
                 isLoggedIn = True
             elif status == '201':
                 if isLoggedIn is not None:
-                    logger.info('Please press confirm on your phone.')
+                    logger.info('Please press login on your phone.')
                     isLoggedIn = None
             elif status != '408':
                 break
@@ -75,13 +75,12 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
     text = [];
     for u in self.memberList:
         text.append(u['NickName']+'\t'+u['UserName']+'\n');
-    utils.send_txt('search_friends','Friend List',''.join(text));
+    utils.send_txt('search_friends','Friend List',(''.join(text)).encode('utf-8'));
 
     text = [];
     for u in self.chatroomList:
         text.append(u['NickName']+'\t'+u['UserName']+'\n');
     utils.send_txt('search_chatrooms','Chatroom List',''.join(text));
-
 
     if hasattr(loginCallback, '__call__'):
         r = loginCallback()
