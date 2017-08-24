@@ -40,6 +40,15 @@ def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
         self.login(enableCmdQR=enableCmdQR, picDir=picDir, qrCallback=qrCallback,
             loginCallback=loginCallback, exitCallback=exitCallback)
 
+def msg2email(msg,senderType):
+    pref="";
+    if(2==senderType):
+        pref+=(msg['ActualNickName']+':').encode('utf-8');
+    if(msg['Type']=='Text'):
+        send_txt(msg['User']['UserName'].replace('@','#'),\
+                 msg['User']['NickName'],\
+                 pref+msg['Text'].encode('utf-8'));
+    
 def configured_reply(self):
     ''' determine the type of message and reply if its method is defined
         however, I use a strange way to determine whether a msg is from massive platform
@@ -55,16 +64,13 @@ def configured_reply(self):
         replyFn = None;
         if isinstance(msg['User'], templates.User):
             logger.info('new message from '+msg['User']['UserName']);
-            if(msg['Type']=='Text'):
-                send_txt(msg['User']['UserName'].replace('@','#'),msg['User']['NickName'],msg['Text']);
-
+            msg2email(msg,1);
             replyFn = self.functionDict['FriendChat'].get(msg['Type']);
         elif isinstance(msg['User'], templates.MassivePlatform):
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
         elif isinstance(msg['User'], templates.Chatroom):
             logger.info('new message from '+msg['User']['UserName']);
-            if(msg['Type']=='Text'):
-                send_txt(msg['User']['UserName'].replace('@','#'),msg['User']['NickName'],msg['ActualNickName']+':'+msg['Text']);
+            msg2email(msg,2);
             replyFn = self.functionDict['GroupChat'].get(msg['Type'])
         if replyFn is None:
             r = None
@@ -95,7 +101,7 @@ def msg_register(self, msgType, isFriendChat=False, isGroupChat=False, isMpChat=
     return _msg_register
 
 def run(self, debug=False, blockThread=True):
-    logger.info('Start auto replying.')
+    logger.info('Start auto forwarding.')
     if debug:
         set_logging(loggingLevel=logging.DEBUG)
     def reply_fn():
