@@ -41,7 +41,7 @@ class mygmail:
         msg.attach(MIMEText(txtmsg));
         
         with open(filepath, 'rb') as f:
-            img = MIMEImage(f.read())
+            img = MIMEImage(f.read(),_subtype=filepath[filepath.rfind('.')+1:]);
         
         img.add_header('Content-Disposition',
                        'attachment',
