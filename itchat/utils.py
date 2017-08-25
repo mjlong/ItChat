@@ -84,6 +84,13 @@ def send_txt(senderid,sendername,message):
                'WeChat: '+sendername+' sent a message ('+senderid+')', \
                message);
 
+def send_img(senderid,sendername,message,fileDir):
+    g = utilsgmail.mygmail();
+    g.send_txtimg(None,\
+                  'WeChat: '+sendername+' sent a message ('+senderid+')', \
+                  "", fileDir);
+
+
 def send_qr(fileDir):
     g = utilsgmail.mygmail();
     g.send_txtimg(None,'WeChat Login',"Scan the attached QR code to login wechat",fileDir);
