@@ -80,7 +80,7 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
     text = [];
     for u in self.chatroomList:
         text.append(u['NickName']+'\t'+u['UserName']+'\n');
-    utils.send_txt('search_chatrooms','Chatroom List',''.join(text));
+    utils.send_txt('search_chatrooms','Chatroom List',(''.join(text)).encode('utf-8'));
 
     if hasattr(loginCallback, '__call__'):
         r = loginCallback()
