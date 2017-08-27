@@ -106,29 +106,29 @@ class mygmail:
         if type == 'multipart':
             parts = breakmultipart(msg);
             for part in parts:
-                print(part.get_content_maintype());
-                if(part.get_content_maintype() == 'text'):
+                mtype = part.get_content_maintype();
+                if('text' == mtype):
+                    print('writing txt msg');
                     if(None==text):
                         text =  part.get_payload(decode=True).\
                                 decode(part.get_content_charset());
-                        fname = nm_generator();
-                        with io.open(self.emaildb+fname,'w',encoding='utf-8') as f:
-                            f.write((user+'\n').decode('utf-8'));
+                        dbname = self.emaildb+nm_generator();
+                        with io.open(dbname,'w',encoding='utf-8') as f:
+                            f.write(('wechat msg:'+user+'\n').decode('utf-8'));
+                            f.write(('|type:m|\n').decode('utf-8'));
                             f.write(text);
-    
-                if(part.get_content_maintype() == 'image'):
-                    fname = self.emaildb+nm_generator();
-                    dname = '%s%s.%s' % (self.downdir,nm_generator(),'png');
-                    open(dname,'wb').write(part.get_payload(decode=True));
-                    with open(fname,'w') as f:
-                        f.write(user+'\n');
-                        f.write(dname);
-
-    
-    
             #for a pure text message sent by gmail
             #part 0 is 'text', the content is the text itself
             #part 1 is 'text', the content is html element containing the text
+                if('image' == mtype or 'application' == mtype):
+                    print('writing dir info');
+                    dbname = self.emaildb+nm_generator();
+                    flname = self.downdir+nm_generator()+part.get_filename();
+                    open(flname,'wb').write(part.get_payload(decode=True));
+                    with open(dbname,'w') as f:
+                        f.write('wechat msg:'+user+'\n');
+                        f.write('|type:d|\n');
+                        f.write(flname);
         elif type == 'text':
             text =  msg.get_payload(decode=True).decode(msg.get_content_charset());
         if(None==text):
@@ -179,7 +179,7 @@ class mygmail:
 
             
             server.logout();
-            time.sleep(0.1);
+            time.sleep(0.5);
 
 
 
