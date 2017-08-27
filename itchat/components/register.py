@@ -1,4 +1,4 @@
-import os,logging, traceback, sys, threading
+import time,os,logging, traceback, sys, threading
 try:
     import Queue
 except ImportError:
@@ -50,7 +50,7 @@ def msg2email(msg,senderType):
                  msg['User']['NickName'],\
                  pref+msg['Text'].encode('utf-8'));
     if((msg['Type']=='Picture') or (msg['Type']=='Attachment')):
-        fileDir = 'downloads/'+msg['FileName'];
+        fileDir = os.environ['DOWNDIR']+msg['FileName'];
         msg['Text'](fileDir);
         send_img(msg['User']['UserName'].replace('@','#'),\
                  msg['User']['NickName'],\
@@ -140,8 +140,58 @@ def runsend(self):
             logger.info('Bye~')
     reply_fn()
 
-import email
+import io
 def configured_send(self):
+    emaildbpath = os.environ['EMAILDB'];
+    messagefiles = os.listdir(emaildbpath);
+    for filename in messagefiles:
+        realname = emaildbpath+filename;
+        print('processing message from'+realname);
+        f = io.open(realname,'r',encoding='utf-8');
+        emsg = f.read().encode('utf-8');
+        f.close();
+        print('raw msg:'+emsg);
+        ind = emsg.find('wechat msg:');
+        if(-1!=ind):
+            emsg = emsg[ind+11:];
+            ind1 = emsg.find('\n');
+            userid = emsg[:ind1];
+            emsg = emsg[ind1+1:];
+
+            ind1 = emsg.find('|type:');
+            mtype = emsg[ind1+6];
+            emsg  = emsg[ind1+9:];
+
+            text = None;
+            if('m'==mtype):
+                text = emsg;
+                print('msg type:',type(text));
+                print('msg:',text);
+                if(str is type(text)):
+                    text = text.decode('utf-8');
+            if('d'==mtype): 
+                fileDir = emsg;
+                text = '@fil@%s'%fileDir;
+                print('d',type(text));
+                print('d',text);
+
+            print('userName = '+userid);
+
+            user = None;
+            if('@'==userid[0]):
+                if('@'!=userid[1]):
+                    user = self.search_friends(userName=userid);
+                else:
+                    user = self.search_chatrooms(userName=userid);
+            if(None!=user):
+                print('sending...',text);
+                user.send(text);
+ 
+            os.remove(realname);
+        time.sleep(0.2);
+
+import email
+def configured_send_procmail(self):
     emaildbpath = os.environ['EMAILDB'];
     messagefiles = os.listdir(emaildbpath);
     for filename in messagefiles:
