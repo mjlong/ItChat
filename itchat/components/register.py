@@ -46,13 +46,13 @@ def msg2email(msg,senderType):
     if(2==senderType):
         pref+=(msg['ActualNickName']+':').encode('utf-8');
     if(msg['Type']=='Text'):
-        send_txt(msg['User']['UserName'].replace('@','#'),\
+        send_txt(msg['User']['UserName'],\
                  msg['User']['NickName'],\
                  pref+msg['Text'].encode('utf-8'));
     if((msg['Type']=='Picture') or (msg['Type']=='Attachment')):
         fileDir = os.environ['DOWNDIR']+msg['FileName'];
         msg['Text'](fileDir);
-        send_img(msg['User']['UserName'].replace('@','#'),\
+        send_img(msg['User']['UserName'],\
                  msg['User']['NickName'],\
                  pref,fileDir);
     
@@ -140,6 +140,16 @@ def runsend(self):
             logger.info('Bye~')
     reply_fn()
 
+def filedir2msg(fileDir):
+    dot = fileDir.rfind('.');
+    ftype = fileDir[dot+1:];
+    prefix = '@fil@';
+    if('png'==ftype or 'jpg'==ftype or 'gif'==ftype):
+        prefix = '@img@';
+    if('mp4'==ftype):
+        prefix = '@vid@';
+    return prefix+fileDir;
+
 import io
 def configured_send(self):
     emaildbpath = os.environ['EMAILDB'];
@@ -165,15 +175,10 @@ def configured_send(self):
             text = None;
             if('m'==mtype):
                 text = emsg;
-                print('msg type:',type(text));
-                print('msg:',text);
                 if(str is type(text)):
                     text = text.decode('utf-8');
             if('d'==mtype): 
-                fileDir = emsg;
-                text = '@fil@%s'%fileDir;
-                print('d',type(text));
-                print('d',text);
+                text = filedir2msg(emsg);
 
             print('userName = '+userid);
 
