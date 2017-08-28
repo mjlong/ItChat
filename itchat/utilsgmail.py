@@ -5,6 +5,7 @@ from itertools import chain
 
 import smtplib
 import email
+import email.Header
 import imaplib
 
 from email.mime.text import MIMEText
@@ -169,11 +170,10 @@ class mygmail:
                     rv, data = server.uid('fetch', uid, '(RFC822)')  # fetch entire message
                     msg = email.message_from_string(data[0][1]);
                     uid_max = uid;
-                    subj = msg['Subject'];
+                    subj,encoding = email.Header.decode_header(msg['Subject'])[0];
                     ind1 = subj.find('(');
                     ind2 = subj.find(')');
                     username = subj[ind1+1:ind2].replace('#','@');
-                    print(type(subj));
                     print('New message from ',username);
                     self.get_first_text_block(username,msg);
 
