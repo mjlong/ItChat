@@ -41,20 +41,29 @@ def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
             loginCallback=loginCallback, exitCallback=exitCallback)
 
 def msg2email(msg,senderType):
-    logger.info('new message of type '+msg['Type']+' from '+msg['User']['UserName']);
+    mtype = msg['Type'];
+    logger.info('new message of type '+mtype+' from '+msg['User']['UserName']);
     pref="";
     if(2==senderType):
         pref+=(msg['ActualNickName']+':').encode('utf-8');
-    if(msg['Type']=='Text'):
+    if('Text'==mtype):
         send_txt(msg['User']['UserName'],\
                  msg['User']['NickName'],\
                  pref+msg['Text'].encode('utf-8'));
-    if((msg['Type']=='Picture') or (msg['Type']=='Attachment')):
+    if(mtype in ('Picture','Attachment','Recording','Video')):
         fileDir = os.environ['DOWNDIR']+msg['FileName'];
         msg['Text'](fileDir);
         send_img(msg['User']['UserName'],\
                  msg['User']['NickName'],\
                  pref,fileDir);
+
+    if(mtype == 'Sharing'):
+        send_txt(msg['User']['UserName'],\
+                 msg['User']['NickName'],\
+                 pref+\
+                 msg['Text'].encode('utf-8')+'\n'+\
+                 msg['Content'].encode('utf-8'));
+
     
 def configured_reply(self):
     ''' determine the type of message and reply if its method is defined
