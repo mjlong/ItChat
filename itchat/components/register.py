@@ -82,6 +82,7 @@ def configured_reply(self):
             msg2email(msg,1);
             replyFn = self.functionDict['FriendChat'].get(msg['Type']);
         elif isinstance(msg['User'], templates.MassivePlatform):
+            msg2email(msg,3);
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
         elif isinstance(msg['User'], templates.Chatroom):
             msg2email(msg,2);
