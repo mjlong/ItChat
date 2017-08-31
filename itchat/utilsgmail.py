@@ -124,8 +124,14 @@ class mygmail:
                 if('image' == mtype or 'application' == mtype):
                     print('writing dir info');
                     dbname = self.emaildb+nm_generator();
-                    flname = self.downdir+nm_generator()+part.get_filename();
-                    open(flname,'wb').write(part.get_payload(decode=True));
+                    flname,encoding = email.Header.decode_header(part.get_filename())[0];
+                    print(flname);
+                    inddot = flname.rfind('.');
+                    flpre = self.downdir+nm_generator();
+                    filecontent = part.get_payload(decode=True);
+                    open(flpre+flname,'wb').write(filecontent);
+                    flname = flpre+nm_generator()+flname[inddot:];
+                    open(flname,'wb').write(filecontent);
                     with open(dbname,'w') as f:
                         f.write('wechat msg:'+user+'\n');
                         f.write('|type:d|\n');
