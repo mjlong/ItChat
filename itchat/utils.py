@@ -1,4 +1,4 @@
-import re, os, sys, subprocess, copy, traceback, logging
+import io, re, os, sys, subprocess, copy, traceback, logging
 from os import path
 
 try:
@@ -32,6 +32,22 @@ for k in ('UniFriend', 'Sex', 'AppAccountFlag', 'VerifyFlag', 'ChatRoomId', 'Hid
         'StarFriend', 'Statues'):
     friendInfoTemplate[k] = 0
 friendInfoTemplate['MemberList'] = []
+
+def readgg(fname):
+    f = io.open(fname,'r',encoding='utf-8');
+    nns = [];
+    temp = None;
+    for l in f:
+        line = (l.encode('utf-8').strip()).decode('utf-8');
+        if(u'<<<<<<'==line):
+            temp = [];
+        else:
+            if(u'>>>>>>'==line):
+                nns.append(temp);
+            else:
+                temp.append(line);
+    f.close();
+    return nns;
 
 def clear_screen():
     os.system('cls' if config.OS == 'Windows' else 'clear')
