@@ -5,7 +5,7 @@ except ImportError:
     import queue as Queue
 
 from ..log import set_logging
-from ..utils import test_connect,send_txt,send_img
+from ..utils import test_connect,send_txt,send_img,readgg
 from ..storage import templates
 
 logger = logging.getLogger('itchat')
@@ -64,7 +64,6 @@ def msg2email(msg,senderType):
                  msg['Text'].encode('utf-8')+'\n'+\
                  msg['Content'].encode('utf-8'));
 
-    
 def configured_reply(self):
     ''' determine the type of message and reply if its method is defined
         however, I use a strange way to determine whether a msg is from massive platform
@@ -85,8 +84,24 @@ def configured_reply(self):
             msg2email(msg,3);
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
         elif isinstance(msg['User'], templates.Chatroom):
+            myid = self.memberList[0]['UserName'];
+            gid = msg['User']['UserName'];
+            print('mid',myid);
+            print('gid',gid);
+            print('fid',msg['ActualUserName']);
+            print('fgs',self.g2ind.keys());
+            if(myid!=msg['ActualUserName'] and gid in self.g2ind.keys()):
+                ind = self.g2ind[gid];
+                print('in group no:',ind);
+                for g in self.ggids[ind]:
+                    print('neighbors:',g);
+                    if(g!=gid):
+                        print('send to ',g);
+                        self.send_msg(msg['ActualNickName']+':',toUserName=g);
+                        self.send_raw_msg(msg['Type'],msg['Content'],toUserName=g);
+        
             msg2email(msg,2);
-            replyFn = self.functionDict['GroupChat'].get(msg['Type'])
+            replyFn = self.functionDict['GroupChat'].get(msg['Type']);
         if replyFn is None:
             r = None
         else:
@@ -115,7 +130,24 @@ def msg_register(self, msgType, isFriendChat=False, isGroupChat=False, isMpChat=
         return fn
     return _msg_register
 
-def run(self, debug=False, blockThread=True):
+def run(self, debug=False, blockThread=True,gname='groupgroup'):
+    ggs = readgg(gname);
+    self.ggids = [];
+    self.g2ind = dict();
+    ig = 0;
+    for gg in ggs:
+        gids = [];
+        for g in gg:
+            gid = self.search_chatrooms(name=g);
+            if(None==gid):
+                print('Warning! '+g+' not found');
+            else:
+                gidn = gid[0]['UserName'];
+                self.g2ind[gidn] = ig;
+                gids.append(gidn);
+        self.ggids.append(gids);
+        ig+=1;
+
     logger.info('Start auto forwarding.')
     if debug:
         set_logging(loggingLevel=logging.DEBUG)
