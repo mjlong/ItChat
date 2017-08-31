@@ -41,28 +41,54 @@ def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
             loginCallback=loginCallback, exitCallback=exitCallback)
 
 def msg2email(msg,senderType):
+    rvtext = None;
     mtype = msg['Type'];
     logger.info('new message of type '+mtype+' from '+msg['User']['UserName']);
     pref="";
     if(2==senderType):
         pref+=(msg['ActualNickName']+':').encode('utf-8');
     if('Text'==mtype):
+        rvtext = pref+msg['Text'].encode('utf-8');
         send_txt(msg['User']['UserName'],\
                  msg['User']['NickName'],\
-                 pref+msg['Text'].encode('utf-8'));
+                 rvtext);
+        if(str is type(rvtext)):
+            rvtext = rvtext.decode('utf-8');
     if(mtype in ('Picture','Attachment','Recording','Video')):
         fileDir = os.environ['DOWNDIR']+msg['FileName'];
+        logger.info('downloading file ...');
         msg['Text'](fileDir);
         send_img(msg['User']['UserName'],\
                  msg['User']['NickName'],\
                  pref,fileDir);
+        rvtext = filedir2msg(fileDir);
+
+        print('msg2email...',msg['FileName']);
 
     if(mtype == 'Sharing'):
+        print(msg);
+        ct = msg['Content'].encode('utf-8');
+        i1 = ct.find('<title>')+7;
+        i2 = ct.find('</title>');
+        tt = ct[i1:i2];
+        i1 = ct.find('<des>')+5;
+        i2 = ct.find('</des>');
+        ds = ct[i1:i2];
+        i1 = ct.find('<url>')+5;
+        i2 = ct.find('</url>');
+        ul = ct[i1:i2];
+
+        rvtext = pref+tt+'\n'+ds+'\n'+ul;
         send_txt(msg['User']['UserName'],\
                  msg['User']['NickName'],\
-                 pref+\
-                 msg['Text'].encode('utf-8')+'\n'+\
-                 msg['Content'].encode('utf-8'));
+                 rvtext);
+        if(str is type(rvtext)):
+            rvtext = rvtext.decode('utf-8');
+
+    return rvtext;
+
+def isTextMsg(msg):
+    return not (('@fil@/' in msg)  or  ('@img@/' in msg) or ('@vid@/' in msg)  );
 
 def configured_reply(self):
     ''' determine the type of message and reply if its method is defined
@@ -84,23 +110,22 @@ def configured_reply(self):
             msg2email(msg,3);
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
         elif isinstance(msg['User'], templates.Chatroom):
+            rvtext = msg2email(msg,2);
+            print(rvtext);
+            print(type(rvtext));
             myid = self.memberList[0]['UserName'];
             gid = msg['User']['UserName'];
-            print('mid',myid);
-            print('gid',gid);
-            print('fid',msg['ActualUserName']);
-            print('fgs',self.g2ind.keys());
             if(myid!=msg['ActualUserName'] and gid in self.g2ind.keys()):
+                print('forwarding....');
                 ind = self.g2ind[gid];
-                print('in group no:',ind);
                 for g in self.ggids[ind]:
-                    print('neighbors:',g);
+                    print('f to',g);
                     if(g!=gid):
-                        print('send to ',g);
-                        self.send_msg(msg['ActualNickName']+':',toUserName=g);
-                        self.send_raw_msg(msg['Type'],msg['Content'],toUserName=g);
+                        if(str is type(rvtext)):
+                            self.send_msg(msg['ActualNickName']+':',toUserName=g);
+                        print('send', rvtext);
+                        self.send(rvtext, toUserName=g);
         
-            msg2email(msg,2);
             replyFn = self.functionDict['GroupChat'].get(msg['Type']);
         if replyFn is None:
             r = None
@@ -186,7 +211,7 @@ def filedir2msg(fileDir):
     dot = fileDir.rfind('.');
     ftype = fileDir[dot+1:];
     prefix = '@fil@';
-    if('png'==ftype or 'jpg'==ftype or 'gif'==ftype):
+    if('png'==ftype or 'jpg'==ftype): # or 'gif'==ftype):
         prefix = '@img@';
     if('mp4'==ftype):
         prefix = '@vid@';
@@ -217,10 +242,11 @@ def configured_send(self):
             text = None;
             if('m'==mtype):
                 text = emsg;
-                if(str is type(text)):
-                    text = text.decode('utf-8');
             if('d'==mtype): 
                 text = filedir2msg(emsg);
+            if(str is type(text)):
+                text = text.decode('utf-8');
+
 
             print('userName = '+userid);
 
@@ -233,6 +259,7 @@ def configured_send(self):
             if(None!=user):
                 print('sending...',text);
                 user.send(text);
+                print('msg sent');
  
             os.remove(realname);
         time.sleep(0.2);
