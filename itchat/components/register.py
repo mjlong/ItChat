@@ -124,6 +124,8 @@ def configured_reply(self):
                         if(str is type(rvtext)):
                             self.send_msg(msg['ActualNickName']+':',toUserName=g);
                         print('send', rvtext);
+                        if('.gif'==rvtext[-4:]):
+                            self.send('emoj unavailable', toUserName=g);
                         self.send(rvtext, toUserName=g);
         
             replyFn = self.functionDict['GroupChat'].get(msg['Type']);
@@ -164,7 +166,7 @@ def run(self, debug=False, blockThread=True,gname='groupgroup'):
         gids = [];
         for g in gg:
             gid = self.search_chatrooms(name=g);
-            if(None==gid):
+            if([]==gid):
                 print('Warning! '+g+' not found');
             else:
                 gidn = gid[0]['UserName'];
