@@ -40,7 +40,7 @@ def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
         self.login(enableCmdQR=enableCmdQR, picDir=picDir, qrCallback=qrCallback,
             loginCallback=loginCallback, exitCallback=exitCallback)
 
-def msg2email(msg,senderType):
+def msg2email(msg,senderType,myname='[]'):
     rvtext = None;
     mtype = msg['Type'];
     logger.info('new message of type '+mtype+' from '+msg['User']['UserName']);
@@ -50,7 +50,7 @@ def msg2email(msg,senderType):
     if('Text'==mtype):
         rvtext = pref+msg['Text'].encode('utf-8');
         send_txt(msg['User']['UserName'],\
-                 msg['User']['NickName'],\
+                 myname+msg['User']['NickName'],\
                  rvtext);
         if(str is type(rvtext)):
             rvtext = rvtext.decode('utf-8');
@@ -59,7 +59,7 @@ def msg2email(msg,senderType):
         logger.info('downloading file ...');
         msg['Text'](fileDir);
         send_img(msg['User']['UserName'],\
-                 msg['User']['NickName'],\
+                 myname+msg['User']['NickName'],\
                  pref,fileDir);
         rvtext = filedir2msg(fileDir);
 
@@ -80,7 +80,7 @@ def msg2email(msg,senderType):
 
         rvtext = pref+tt+'\n'+ds+'\n'+ul;
         send_txt(msg['User']['UserName'],\
-                 msg['User']['NickName'],\
+                 myname+msg['User']['NickName'],\
                  rvtext);
         if(str is type(rvtext)):
             rvtext = rvtext.decode('utf-8');
@@ -104,13 +104,13 @@ def configured_reply(self):
     else:
         replyFn = None;
         if isinstance(msg['User'], templates.User):
-            msg2email(msg,1);
+            msg2email(msg,1,self.myname);
             replyFn = self.functionDict['FriendChat'].get(msg['Type']);
         elif isinstance(msg['User'], templates.MassivePlatform):
-            msg2email(msg,3);
+            msg2email(msg,3,self.myname);
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
         elif isinstance(msg['User'], templates.Chatroom):
-            rvtext = msg2email(msg,2);
+            rvtext = msg2email(msg,2,self.myname);
             print(rvtext);
             print(type(rvtext));
             myid = self.memberList[0]['UserName'];
@@ -158,6 +158,7 @@ def msg_register(self, msgType, isFriendChat=False, isGroupChat=False, isMpChat=
     return _msg_register
 
 def run(self, debug=False, blockThread=True,gname='groupgroup'):
+    self.myname = '[%s]'%self.memberList[0]['NickName'];
     ggs = readgg(gname);
     self.ggids = [];
     self.g2ind = dict();
