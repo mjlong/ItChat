@@ -1,4 +1,4 @@
-import time,os,logging, traceback, sys, threading
+import time,os,logging, traceback, sys, threading,requests
 try:
     import Queue
 except ImportError:
@@ -54,6 +54,7 @@ def msg2email(msg,senderType,myname='[]'):
                  rvtext);
         if(str is type(rvtext)):
             rvtext = rvtext.decode('utf-8');
+        rvtext = [rvtext];
     if(mtype in ('Picture','Attachment','Recording','Video')):
         fileDir = os.environ['DOWNDIR']+msg['FileName'];
         logger.info('downloading file ...');
@@ -61,12 +62,33 @@ def msg2email(msg,senderType,myname='[]'):
         send_img(msg['User']['UserName'],\
                  myname+msg['User']['NickName'],\
                  pref,fileDir);
-        rvtext = filedir2msg(fileDir);
+        rvtext = [filedir2msg(fileDir)];
 
-        print('msg2email...',msg['FileName']);
+    if('Card'==mtype):
+        rvtext = []
+        rtxt = pref+('Recommended Contact:'+msg['Text']['NickName']).encode('utf-8');
+        send_txt(msg['User']['UserName'],\
+                 myname+msg['User']['NickName'],\
+                 rtxt);
+        if(str is type(rtxt)):
+            rtxt = rtxt.decode('utf-8');
+        rvtext.append(rtxt);
+        uid = msg['RecommendInfo']['UserName'].encode('utf-8');
+        print('uid',uid);
+        url = msg['Content'].encode('utf-8');
+        ind = url.find("bigheadimgurl=\"");
+        url = url[ind+15:];
+        ind = url.find("\"");
+        url = url[:ind];
+        print('url',url);
+        fileDir = os.environ['DOWNDIR']+uid+'.png';
+        open(fileDir,'wb').write(requests.get(url,allow_redirects=True).content);
+        send_img(msg['User']['UserName'],\
+                 myname+msg['User']['NickName'],\
+                 "the profile is",fileDir);
+        rvtext.append(filedir2msg(fileDir));
 
     if(mtype == 'Sharing'):
-        print(msg);
         ct = msg['Content'].encode('utf-8');
         i1 = ct.find('<title>')+7;
         i2 = ct.find('</title>');
@@ -84,6 +106,7 @@ def msg2email(msg,senderType,myname='[]'):
                  rvtext);
         if(str is type(rvtext)):
             rvtext = rvtext.decode('utf-8');
+        rvtext = [rvtext];
 
     return rvtext;
 
@@ -112,7 +135,6 @@ def configured_reply(self):
         elif isinstance(msg['User'], templates.Chatroom):
             rvtext = msg2email(msg,2,self.myname);
             print(rvtext);
-            print(type(rvtext));
             myid = self.memberList[0]['UserName'];
             gid = msg['User']['UserName'];
             if(myid!=msg['ActualUserName'] and gid in self.g2ind.keys()):
@@ -121,12 +143,13 @@ def configured_reply(self):
                 for g in self.ggids[ind]:
                     print('f to',g);
                     if(g!=gid):
-                        if(str is type(rvtext)):
-                            self.send_msg(msg['ActualNickName']+':',toUserName=g);
-                        print('send', rvtext);
-                        if('.gif'==rvtext[-4:]):
-                            self.send('emoj unavailable', toUserName=g);
-                        self.send(rvtext, toUserName=g);
+                        for rtxt in rvtext:
+                            if(str is type(rtxt)):
+                                self.send_msg(msg['ActualNickName']+':',toUserName=g);
+                            print('send', rtxt);
+                            if('.gif'==rtxt[-4:]):
+                                self.send('emoj unavailable', toUserName=g);
+                            self.send(rtxt, toUserName=g);
         
             replyFn = self.functionDict['GroupChat'].get(msg['Type']);
         if replyFn is None:
@@ -198,6 +221,7 @@ def run(self, debug=False, blockThread=True,gname='groupgroup'):
 
 def runsend(self):
     logger.info('Start auto sending.')
+    self.myname = '[%s]'%self.memberList[0]['NickName'];
     def reply_fn():
         try:
             while self.alive:
@@ -214,7 +238,7 @@ def filedir2msg(fileDir):
     dot = fileDir.rfind('.');
     ftype = fileDir[dot+1:];
     prefix = '@fil@';
-    if('png'==ftype or 'jpg'==ftype): # or 'gif'==ftype):
+    if('png'==ftype or 'jpg'==ftype or 'gif'==ftype):
         prefix = '@img@';
     if('mp4'==ftype):
         prefix = '@vid@';
@@ -263,6 +287,7 @@ def configured_send(self):
                 print('sending...',text);
                 user.send(text);
                 print('msg sent');
+                send_txt('auto confirm', self.myname+'msg helper', (text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
  
             os.remove(realname);
         time.sleep(0.2);
