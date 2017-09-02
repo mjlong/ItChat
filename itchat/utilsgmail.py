@@ -64,6 +64,7 @@ class mygmail:
         self.emailcrd = file2dict('SESCRED');
         self.emaildb  = os.environ['EMAILDB'];
         self.downdir  = os.environ['DOWNDIR'];
+        self.slt = 0.2;
 
     def send_txt(self,targets,subject,txtmsg):
         msg = MIMEText(txtmsg);
@@ -74,7 +75,16 @@ class mygmail:
         msg['To'] = ', '.join(targets);
         server = smtplib.SMTP_SSL(self.emailcrd['SEND_HOST'],\
                                   self.emailcrd['SEND_PORT']);
-        server.login(self.emailcrd['USER'],self.emailcrd['PASSWORD']);
+        while(1):
+            x = server.login(self.emailcrd['USER'],self.emailcrd['PASSWORD']);
+            if('Accepted' in x[1]):
+                break;
+            print(x);
+            time.sleep(self.slt);
+            server = smtplib.SMTP_SSL(self.emailcrd['SEND_HOST'],\
+                                      self.emailcrd['SEND_PORT']);
+
+            
         server.sendmail(self.emailcrd['SENDER'],targets,msg.as_string());
         server.quit();
 
@@ -97,7 +107,15 @@ class mygmail:
 
         server = smtplib.SMTP_SSL(self.emailcrd['SEND_HOST'],\
                                   self.emailcrd['SEND_PORT']);
-        server.login(self.emailcrd['USER'],self.emailcrd['PASSWORD']);
+        while(1):
+            x = server.login(self.emailcrd['USER'],self.emailcrd['PASSWORD']);
+            if('Accepted' in x[1]):
+                break;
+            print(x);
+            time.sleep(self.slt);
+            server = smtplib.SMTP_SSL(self.emailcrd['SEND_HOST'],\
+                                      self.emailcrd['SEND_PORT']);
+
         server.sendmail(self.emailcrd['SENDER'],targets,msg.as_string());
         server.quit();
 
@@ -148,7 +166,15 @@ class mygmail:
 
     def receive(self):
         server = imaplib.IMAP4_SSL(self.emailcrd['REC_HOST'],self.emailcrd['REC_PORT']);
-        server.login(self.emailcrd['USER'],self.emailcrd['PASSWORD']);
+        while(1):
+            x = server.login(self.emailcrd['USER'],self.emailcrd['PASSWORD']);
+            if('OK'==x[0]):
+                break;
+            print(x);
+            time.sleep(self.slt);
+            server = smtplib.SMTP_SSL(self.emailcrd['SEND_HOST'],\
+                                      self.emailcrd['SEND_PORT']);
+
         server.select("INBOX");
 
         criteria = {
@@ -166,7 +192,15 @@ class mygmail:
 # Have to login/logout each time because that's the only way to get fresh results.
         while 1:
             server = imaplib.IMAP4_SSL(self.emailcrd['REC_HOST'],self.emailcrd['REC_PORT']);
-            server.login(self.emailcrd['USER'],self.emailcrd['PASSWORD']);
+            while(1):
+                x = server.login(self.emailcrd['USER'],self.emailcrd['PASSWORD']);
+                if('OK'==x[0]):
+                    break;
+                print(x);
+                time.sleep(self.slt);
+                server = smtplib.SMTP_SSL(self.emailcrd['SEND_HOST'],\
+                                          self.emailcrd['SEND_PORT']);
+
             server.select("INBOX");
             rv,data = server.uid('search', None, search_string(uid_max, criteria));
             uids = [int(s) for s in data[0].split()]
@@ -185,11 +219,10 @@ class mygmail:
 
             
             server.logout();
-            time.sleep(0.5);
+            time.sleep(self.slt*5);
 
 
 
 if __name__ == "__main__":
     g = mygmail()
-    #g.send_txtimg(None,'sub:hehe','txt:haha','/home/jlmiao/Dropbox (MIT)/source/funGitHub/ItChat/V144.png')
     g.receive()
