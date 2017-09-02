@@ -97,14 +97,14 @@ import utilsgmail
 def send_txt(senderid,sendername,message):
     g = utilsgmail.mygmail();
     g.send_txt(None,\
-               'WeChat: '+sendername+' sent a message ('+senderid+')', \
+               'WeChat'+sendername+' sent a message ('+senderid+')', \
                message);
 
 def send_img(senderid,sendername,message,fileDir):
     g = utilsgmail.mygmail();
     g.send_txtimg(None,\
-                  'WeChat: '+sendername+' sent a message ('+senderid+')', \
-                  "", fileDir);
+                  'WeChat'+sendername+' sent a message ('+senderid+')', \
+                  message, fileDir);
 
 
 def send_qr(fileDir):
