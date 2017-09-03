@@ -42,6 +42,8 @@ def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
 
 def msg2email(msg,senderType,myname='[]'):
     rvtext = None;
+    if(not 'UserName' in msg['User'].keys()):
+        return None;
     mtype = msg['Type'];
     logger.info('new message of type '+mtype+' from '+msg['User']['UserName']);
     pref="";
