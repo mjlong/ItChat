@@ -1,4 +1,5 @@
 import time,os,logging, traceback, sys, threading,requests
+import numpy as np
 try:
     import Queue
 except ImportError:
@@ -136,6 +137,8 @@ def configured_reply(self):
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
         elif isinstance(msg['User'], templates.Chatroom):
             rvtext = msg2email(msg,2,self.myname);
+            if(2<len(rvtext)):
+                rvtext = rvtext[:2];
             print(rvtext);
             myid = self.memberList[0]['UserName'];
             gid = msg['User']['UserName'];
@@ -145,6 +148,7 @@ def configured_reply(self):
                 for g in self.ggids[ind]:
                     print('f to',g);
                     if(g!=gid):
+                        time.sleep(1+np.random.rand());
                         for rtxt in rvtext:
                             if(str is type(rtxt)):
                                 self.send_msg(msg['ActualNickName']+':',toUserName=g);
@@ -292,7 +296,7 @@ def configured_send(self):
                 send_txt('auto confirm', self.myname+'msg helper', (text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
  
             os.remove(realname);
-        time.sleep(0.2);
+        time.sleep(0.5+np.random.rand());
 
 import email
 def configured_send_procmail(self):
