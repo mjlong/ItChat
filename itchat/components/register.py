@@ -155,7 +155,7 @@ def configured_reply(self):
                                 self.send_msg(msg['ActualNickName']+':',toUserName=g);
                             print('send', rtxt);
                             if('.gif'==rtxt[-4:]):
-                                self.send('emoj unavailable', toUserName=g);
+                                self.send('sticker unavailable', toUserName=g);
                             self.send(rtxt, toUserName=g);
         
             replyFn = self.functionDict['GroupChat'].get(msg['Type']);
