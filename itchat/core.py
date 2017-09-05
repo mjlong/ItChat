@@ -438,7 +438,7 @@ class Core(object):
         raise NotImplementedError()
 
 
-    def configured_send(self):
+    def configured_send(self,mydir):
         ''' process to-be-sent messages processed by procmail
         '''
         raise NotImplementedError()
