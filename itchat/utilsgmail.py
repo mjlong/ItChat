@@ -58,7 +58,24 @@ def ts_generator():
 def nm_generator():
     return '%s_%s'%(ts_generator(),id_generator());
 
+def writemsg(emaildb,user,text):
+    dbdirs = os.listdir(emaildb);
+    for dbdir in dbdirs:
+        dbname = emaildb+dbdir+'/'+nm_generator();
+        with io.open(dbname,'w',encoding='utf-8') as f:
+            f.write(('wechat msg:'+user+'\n').decode('utf-8'));
+            f.write(('|type:m|\n').decode('utf-8'));
+            f.write(text);
 
+def writedir(emaildb,user,flname):
+    dbdirs = os.listdir(emaildb);
+    for dbdir in dbdirs:
+        dbname = emaildb+dbdir+'/'+nm_generator();
+        with open(dbname,'w') as f:
+            f.write('wechat msg:'+user+'\n');
+            f.write('|type:d|\n');
+            f.write(flname);
+    
 class mygmail:
     def __init__(self):
         self.emailcrd = file2dict('SESCRED');
@@ -131,17 +148,12 @@ class mygmail:
                     if(None==text):
                         text =  part.get_payload(decode=True).\
                                 decode(part.get_content_charset());
-                        dbname = self.emaildb+nm_generator();
-                        with io.open(dbname,'w',encoding='utf-8') as f:
-                            f.write(('wechat msg:'+user+'\n').decode('utf-8'));
-                            f.write(('|type:m|\n').decode('utf-8'));
-                            f.write(text);
+                        writemsg(self.emaildb,user,text);
             #for a pure text message sent by gmail
             #part 0 is 'text', the content is the text itself
             #part 1 is 'text', the content is html element containing the text
                 if('image' == mtype or 'application' == mtype):
                     print('writing dir info');
-                    dbname = self.emaildb+nm_generator();
                     flname,encoding = email.Header.decode_header(part.get_filename())[0];
                     print(flname);
                     inddot = flname.rfind('.');
@@ -150,10 +162,7 @@ class mygmail:
                     open(flpre+flname,'wb').write(filecontent);
                     flname = flpre+nm_generator()+flname[inddot:];
                     open(flname,'wb').write(filecontent);
-                    with open(dbname,'w') as f:
-                        f.write('wechat msg:'+user+'\n');
-                        f.write('|type:d|\n');
-                        f.write(flname);
+                    writedir(self.emaildb,user,flname);
         elif type == 'text':
             text =  msg.get_payload(decode=True).decode(msg.get_content_charset());
         if(None==text):
