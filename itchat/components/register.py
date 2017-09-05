@@ -84,12 +84,13 @@ def msg2email(msg,senderType,myname='[]'):
         ind = url.find("\"");
         url = url[:ind];
         print('url',url);
-        fileDir = os.environ['DOWNDIR']+uid+'.png';
-        open(fileDir,'wb').write(requests.get(url,allow_redirects=True).content);
-        send_img(msg['User']['UserName'],\
-                 myname+msg['User']['NickName'],\
-                 "the profile is",fileDir);
-        rvtext.append(filedir2msg(fileDir));
+        if(len(url)>1):
+            fileDir = os.environ['DOWNDIR']+uid+'.png';
+            open(fileDir,'wb').write(requests.get(url,allow_redirects=True).content);
+            send_img(msg['User']['UserName'],\
+                     myname+msg['User']['NickName'],\
+                     "the profile is",fileDir);
+            rvtext.append(filedir2msg(fileDir));
 
     if(mtype == 'Sharing'):
         ct = msg['Content'].encode('utf-8');
@@ -137,7 +138,7 @@ def configured_reply(self):
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
         elif isinstance(msg['User'], templates.Chatroom):
             rvtext = msg2email(msg,2,self.myname);
-            if(2<len(rvtext)):
+            if(None!=rvtext and 2<len(rvtext)):
                 rvtext = rvtext[:2];
             print(rvtext);
             myid = self.memberList[0]['UserName'];
@@ -212,6 +213,7 @@ def run(self, debug=False, blockThread=True,gname='groupgroup'):
         try:
             while self.alive:
                 self.configured_reply()
+                time.sleep(1.5+np.random.rand());
         except KeyboardInterrupt:
             if self.useHotReload:
                 self.dump_login_status()
@@ -225,13 +227,14 @@ def run(self, debug=False, blockThread=True,gname='groupgroup'):
         replyThread.setDaemon(True)
         replyThread.start()
 
-def runsend(self):
+def runsend(self,mydir=""):
     logger.info('Start auto sending.')
     self.myname = '[%s]'%self.memberList[0]['NickName'];
     def reply_fn():
         try:
             while self.alive:
-                self.configured_send()
+                self.configured_send(mydir)
+                time.sleep(1.5+np.random.rand());
         except KeyboardInterrupt:
             if self.useHotReload:
                 self.dump_login_status()
@@ -251,9 +254,11 @@ def filedir2msg(fileDir):
     return prefix+fileDir;
 
 import io
-def configured_send(self):
-    emaildbpath = os.environ['EMAILDB'];
+def configured_send(self,mydir=""):
+    emaildbpath = os.environ['EMAILDB']+mydir;
     messagefiles = os.listdir(emaildbpath);
+    if([]!=messagefiles):
+        print('files to process:',messagefiles);
     for filename in messagefiles:
         realname = emaildbpath+filename;
         print('processing message from'+realname);
