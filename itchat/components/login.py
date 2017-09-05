@@ -71,16 +71,15 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
     self.web_init()
     self.show_mobile_login()
     self.get_contact(True)
-    
     text = [];
     for u in self.memberList:
         text.append(u['NickName']+'\t'+u['UserName']+'\n');
-    utils.send_txt('search_friends',' Friend List',(''.join(text)).encode('utf-8'));
+    utils.send_txt('search_friends',' [%s]Friend List'%self.memberList[0]['NickName'],(''.join(text)).encode('utf-8'));
 
     text = [];
     for u in self.chatroomList:
         text.append(u['NickName']+'\t'+u['UserName']+'\n');
-    utils.send_txt('search_chatrooms',' Chatroom List',(''.join(text)).encode('utf-8'));
+    utils.send_txt('search_chatrooms',' [%s]Chatroom List'%self.memberList[0]['NickName'],(''.join(text)).encode('utf-8'));
 
     if hasattr(loginCallback, '__call__'):
         r = loginCallback()
