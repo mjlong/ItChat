@@ -41,6 +41,14 @@ def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
         self.login(enableCmdQR=enableCmdQR, picDir=picDir, qrCallback=qrCallback,
             loginCallback=loginCallback, exitCallback=exitCallback)
 
+def strexpand(x):
+    l = len(x)+1;
+    a = int(l*0.2);
+    i = np.random.choice(l,a,replace=False) + np.arange(a);
+    for j in i:
+        x = x[:j] + ' ' + x[j:];
+    return x;
+
 def msg2email(msg,senderType,myname='[]'):
     rvtext = None;
     if(not 'UserName' in msg['User'].keys()):
@@ -57,7 +65,7 @@ def msg2email(msg,senderType,myname='[]'):
                  rvtext);
         if(str is type(rvtext)):
             rvtext = rvtext.decode('utf-8');
-        rvtext = [rvtext];
+        rvtext = [strexpand(rvtext)];
     if(mtype in ('Picture','Attachment','Recording','Video')):
         fileDir = os.environ['DOWNDIR']+msg['FileName'];
         logger.info('downloading file ...');
@@ -301,6 +309,7 @@ def configured_send(self,mydir=""):
                 send_txt('auto confirm', self.myname+'msg helper', (text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
  
             os.remove(realname);
+            time.sleep(3.0+np.random.rand()*4);
         time.sleep(0.5+np.random.rand());
 
 import email
