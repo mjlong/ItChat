@@ -44,12 +44,20 @@ def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
 def strexpand(x):
     l = len(x)+1;
     a = int(l*0.2);
-    i = np.random.choice(l,a,replace=False) + np.arange(a);
-    for j in i:
-        x = x[:j] + ' ' + x[j:];
+    #i = np.random.choice(l,a,replace=False) + np.arange(a);
+    #for j in i:
+    #    x = x[:j] + ' ' + x[j:];
+    sepas = [':', ',', ';','.','!','?','(',')'];
+    for sepa in sepas:
+        ind = x.find(sepa);
+        if(-1==ind):
+            x = x+' ';
+        else:
+            x = x[:ind] + ' ' + x[ind:];
+
     return x;
 
-def msg2email(msg,senderType,myname='[]'):
+def msg2email(msg,senderType,myname='[]',fwemail=True):
     rvtext = None;
     if(not 'UserName' in msg['User'].keys()):
         return None;
@@ -60,9 +68,10 @@ def msg2email(msg,senderType,myname='[]'):
         pref+=(msg['ActualNickName']+':').encode('utf-8');
     if('Text'==mtype):
         rvtext = pref+msg['Text'].encode('utf-8');
-        send_txt(msg['User']['UserName'],\
-                 myname+msg['User']['NickName'],\
-                 rvtext);
+        if(fwemail):
+            send_txt(msg['User']['UserName'],\
+                     myname+msg['User']['NickName'],\
+                     rvtext);
         if(str is type(rvtext)):
             rvtext = rvtext.decode('utf-8');
         rvtext = [strexpand(rvtext)];
@@ -70,17 +79,19 @@ def msg2email(msg,senderType,myname='[]'):
         fileDir = os.environ['DOWNDIR']+msg['FileName'];
         logger.info('downloading file ...');
         msg['Text'](fileDir);
-        send_img(msg['User']['UserName'],\
-                 myname+msg['User']['NickName'],\
-                 pref,fileDir);
+        if(fwemail):
+            send_img(msg['User']['UserName'],\
+                     myname+msg['User']['NickName'],\
+                     pref,fileDir);
         rvtext = [filedir2msg(fileDir)];
 
     if('Card'==mtype):
         rvtext = []
         rtxt = pref+('Recommended Contact:'+msg['Text']['NickName']).encode('utf-8');
-        send_txt(msg['User']['UserName'],\
-                 myname+msg['User']['NickName'],\
-                 rtxt);
+        if(fwemail):
+            send_txt(msg['User']['UserName'],\
+                     myname+msg['User']['NickName'],\
+                     rtxt);
         if(str is type(rtxt)):
             rtxt = rtxt.decode('utf-8');
         rvtext.append(rtxt);
@@ -95,9 +106,10 @@ def msg2email(msg,senderType,myname='[]'):
         if(len(url)>1):
             fileDir = os.environ['DOWNDIR']+uid+'.png';
             open(fileDir,'wb').write(requests.get(url,allow_redirects=True).content);
-            send_img(msg['User']['UserName'],\
-                     myname+msg['User']['NickName'],\
-                     "the profile is",fileDir);
+            if(fwemail):
+                send_img(msg['User']['UserName'],\
+                         myname+msg['User']['NickName'],\
+                         "the profile is",fileDir);
             rvtext.append(filedir2msg(fileDir));
 
     if(mtype == 'Sharing'):
@@ -113,9 +125,10 @@ def msg2email(msg,senderType,myname='[]'):
         ul = ct[i1:i2];
 
         rvtext = pref+tt+'\n'+ds+'\n'+ul;
-        send_txt(msg['User']['UserName'],\
-                 myname+msg['User']['NickName'],\
-                 rvtext);
+        if(fwemail):
+            send_txt(msg['User']['UserName'],\
+                     myname+msg['User']['NickName'],\
+                     rvtext);
         if(str is type(rvtext)):
             rvtext = rvtext.decode('utf-8');
         rvtext = [rvtext];
@@ -139,16 +152,20 @@ def configured_reply(self):
     else:
         replyFn = None;
         if isinstance(msg['User'], templates.User):
-            msg2email(msg,1,self.myname);
+            msg2email(msg,1,self.myname,self.fwemail);
             replyFn = self.functionDict['FriendChat'].get(msg['Type']);
         elif isinstance(msg['User'], templates.MassivePlatform):
-            msg2email(msg,3,self.myname);
+            msg2email(msg,3,self.myname,self.fwemail);
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
         elif isinstance(msg['User'], templates.Chatroom):
-            rvtext = msg2email(msg,2,self.myname);
+            rvtext = msg2email(msg,2,self.myname,self.fwemail);
             if(None!=rvtext and 2<len(rvtext)):
                 rvtext = rvtext[:2];
             print(rvtext);
+            if(None!=rvtext):
+                for ttt in rvtext:
+                  if(None!=ttt):
+                    print(ttt.encode('utf-8'));
             myid = self.memberList[0]['UserName'];
             gid = msg['User']['UserName'];
             if(myid!=msg['ActualUserName'] and gid in self.g2ind.keys()):
@@ -161,7 +178,7 @@ def configured_reply(self):
                         for rtxt in rvtext:
                             if(str is type(rtxt)):
                                 self.send_msg(msg['ActualNickName']+':',toUserName=g);
-                            print('send', rtxt);
+                            print('send--->'+rtxt.encode('utf-8'));
                             if('.gif'==rtxt[-4:]):
                                 self.send('sticker unavailable', toUserName=g);
                             self.send(rtxt, toUserName=g);
@@ -195,10 +212,11 @@ def msg_register(self, msgType, isFriendChat=False, isGroupChat=False, isMpChat=
         return fn
     return _msg_register
 
-def run(self, debug=False, blockThread=True,gname='groupgroup'):
+def run(self, debug=False, blockThread=True,gname='groupgroup',fwemail=True):
     self.myname = '[%s]'%self.memberList[0]['NickName'];
     ggs = readgg(gname);
     self.ggids = [];
+    self.fwemail = fwemail;
     self.g2ind = dict();
     ig = 0;
     for gg in ggs:
@@ -212,6 +230,7 @@ def run(self, debug=False, blockThread=True,gname='groupgroup'):
                 self.g2ind[gidn] = ig;
                 gids.append(gidn);
         self.ggids.append(gids);
+        print(gids)
         ig+=1;
 
     logger.info('Start auto forwarding.')
