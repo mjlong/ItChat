@@ -8,6 +8,7 @@ except ImportError:
 from ..log import set_logging
 from ..utils import test_connect,send_txt,send_img,readgg
 from ..storage import templates
+from .. import utilsgmail
 
 logger = logging.getLogger('itchat')
 
@@ -138,7 +139,7 @@ def msg2email(msg,senderType,myname='[]',fwemail=True):
 def isTextMsg(msg):
     return not (('@fil@/' in msg)  or  ('@img@/' in msg) or ('@vid@/' in msg)  );
 
-def configured_reply(self):
+def configured_reply(self,emaildir):
     ''' determine the type of message and reply if its method is defined
         however, I use a strange way to determine whether a msg is from massive platform
         I haven't found a better solution here
@@ -176,12 +177,27 @@ def configured_reply(self):
                     if(g!=gid):
                         time.sleep(1+np.random.rand());
                         for rtxt in rvtext:
-                            if(str is type(rtxt)):
-                                self.send_msg(msg['ActualNickName']+':',toUserName=g);
+                            print(rtxt)
+                            print(type(rtxt))
                             print('send--->'+rtxt.encode('utf-8'));
-                            if('.gif'==rtxt[-4:]):
-                                self.send('sticker unavailable', toUserName=g);
-                            self.send(rtxt, toUserName=g);
+
+                            if(str is type(rtxt)): #rtxt is str (thus file path and username is not included), 
+                                utilsgmail.writemsg(emaildir,g,             \
+                                                    utilsgmail.dt.strftime( \
+                                                        utilsgmail.dt.now(),'[%Y/%m/%d-%H:%M:%S]') \
+                                                    +msg['ActualNickName']+':');
+                                #self.send_msg(msg['ActualNickName']+':',toUserName=g);
+                                if('.gif'==rtxt[-4:]):
+                                    utilsgmail.writemsg(emaildir,g,'sticker unavailable'.decode('utf-8')); #make type str be type unicode
+                                    #self.send('sticker unavailable', toUserName=g);
+
+                                utilsgmail.writedir(emaildir,g,rtxt[5:]);
+                            else:
+                                print('writing text msg.........',rtxt);
+                                temp = utilsgmail.dt.strftime(utilsgmail.dt.now(),'[%Y/%m/%d-%H:%M:%S]')+rtxt;
+                                print('the msg is',temp);
+                                utilsgmail.writemsg(emaildir,g,temp );
+                            #self.send(rtxt, toUserName=g);
         
             replyFn = self.functionDict['GroupChat'].get(msg['Type']);
         if replyFn is None:
@@ -212,7 +228,7 @@ def msg_register(self, msgType, isFriendChat=False, isGroupChat=False, isMpChat=
         return fn
     return _msg_register
 
-def run(self, debug=False, blockThread=True,gname='groupgroup',fwemail=True):
+def run(self, debug=False, blockThread=True,gname='groupgroup',mydir='',fwemail=True):
     self.myname = '[%s]'%self.memberList[0]['NickName'];
     ggs = readgg(gname);
     self.ggids = [];
@@ -239,7 +255,7 @@ def run(self, debug=False, blockThread=True,gname='groupgroup',fwemail=True):
     def reply_fn():
         try:
             while self.alive:
-                self.configured_reply()
+                self.configured_reply(os.environ['EMAILDB']+mydir)
                 time.sleep(1.5+np.random.rand());
         except KeyboardInterrupt:
             if self.useHotReload:
@@ -254,14 +270,78 @@ def run(self, debug=False, blockThread=True,gname='groupgroup',fwemail=True):
         replyThread.setDaemon(True)
         replyThread.start()
 
-def runsend(self,mydir=""):
+def runsend(self,mydir="",timesfile=''):
     logger.info('Start auto sending.')
     self.myname = '[%s]'%self.memberList[0]['NickName'];
     def reply_fn():
         try:
+            t0 = time.clock();
+            dictUserMsgs = dict(); #dict in the form: {u1:[tmsg+tmsg+..., dmsg, tmsg+..,dmsg,dmsg...],u2:[...]}
+            dictUserType = dict(); #dict in the form: {u1:lasttype, u2:lastype,}
+            dictUserUids = dict(); #dict in the form: {uid:user,uid:user}
+
             while self.alive:
-                self.configured_send(mydir)
-                time.sleep(1.5+np.random.rand());
+                #self.configured_send(mydir,waitperiod);
+
+                emaildbpath = os.environ['EMAILDB']+mydir;
+                messagefiles = os.listdir(emaildbpath);
+                messagefiles.sort();   #order matters especially in the archive forward mode, 
+                                       #here sort string thus sort by file write name due to the file name generator in utilsgmail
+                if([]!=messagefiles):
+                    print('files to process:',messagefiles);
+
+                for filename in messagefiles:
+                    realname = emaildbpath+filename;
+                    userid,user,text,mtype = self.configured_send(realname);
+                    os.remove(realname);
+
+                    if(None!=user):
+                        if(userid in dictUserUids.keys()):
+                            if('m'==mtype):
+                                if('m'== dictUserType[userid]): # last msg is also text msg, append to the last message of the user
+                                    dictUserMsgs[userid][-1]+='\n......\n'+text;
+                                else:                    # last msg is file msg, append as new message of the user
+                                    dictUserMsgs[userid].append(text); 
+                                dictUserType[userid]='m';
+                            else:                        # this msg is file msg, append as new message of the user
+                                dictUserMsgs[userid].append(text);
+                                dictUserType[userid]='d';
+                        else:
+                            dictUserUids[userid] = user;
+                            dictUserType[userid] = mtype;
+                            dictUserMsgs[userid] = [text];
+
+                if(''!=timesfile):
+                    with open(timesfile) as f:
+                        timeparas = f.readlines();
+                    waitperiod = float(timeparas[0][:-1]); 
+                    tsend_mu   = float(timeparas[1][:-1]); 
+                    tsend_sig  = float(timeparas[2][:-1]);                   
+                else:
+                    waitperiod = 2; 
+                    tsend_mu   = 5; 
+                    tsend_sig  = 4;
+
+
+                t1 = time.clock();
+                if((t1-t0)*1000>waitperiod):
+                    print('.....%.1f s passed........'%((time.clock()-t0)*1000));
+                    for userid in dictUserUids.keys():
+                        user = dictUserUids[userid];
+                        for text in dictUserMsgs[userid]:
+                            user.send(text);
+                            print('msg sent',(text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
+                            send_txt('auto confirm', self.myname+'msg helper', \
+                                     (text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
+                            time.sleep(tsend_mu+np.random.rand()*tsend_sig);
+                        time.sleep(    tsend_mu+np.random.rand()*tsend_sig);
+                    
+                    t0 = time.clock();
+                    dictUserMsgs = dict(); 
+                    dictUserType = dict(); 
+                    dictUserUids = dict(); 
+                time.sleep(tsend_mu+np.random.rand()*tsend_sig);               
+
         except KeyboardInterrupt:
             if self.useHotReload:
                 self.dump_login_status()
@@ -281,13 +361,7 @@ def filedir2msg(fileDir):
     return prefix+fileDir;
 
 import io
-def configured_send(self,mydir=""):
-    emaildbpath = os.environ['EMAILDB']+mydir;
-    messagefiles = os.listdir(emaildbpath);
-    if([]!=messagefiles):
-        print('files to process:',messagefiles);
-    for filename in messagefiles:
-        realname = emaildbpath+filename;
+def configured_send(self,realname):
         print('processing message from'+realname);
         f = io.open(realname,'r',encoding='utf-8');
         emsg = f.read().encode('utf-8');
@@ -321,15 +395,15 @@ def configured_send(self,mydir=""):
                     user = self.search_friends(userName=userid);
                 else:
                     user = self.search_chatrooms(userName=userid);
-            if(None!=user):
-                print('sending...',text);
-                user.send(text);
-                print('msg sent');
-                send_txt('auto confirm', self.myname+'msg helper', (text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
+            return userid,user,text,mtype
+                
+#            if(None!=user):
+#                print('sending...',text);
+#                user.send(text);
+#                send_txt('auto confirm', self.myname+'msg helper', (text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
  
-            os.remove(realname);
-            time.sleep(3.0+np.random.rand()*4);
-        time.sleep(0.5+np.random.rand());
+
+
 
 import email
 def configured_send_procmail(self):
