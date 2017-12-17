@@ -428,7 +428,7 @@ class Core(object):
                 - and modified according to your own demond
         '''
         raise NotImplementedError()
-    def configured_reply(self):
+    def configured_reply(self,emaildir=''):
         ''' determine the type of message and reply if its method is defined
             however, I use a strange way to determine whether a msg is from massive platform
             I haven't found a better solution here
@@ -438,7 +438,7 @@ class Core(object):
         raise NotImplementedError()
 
 
-    def configured_send(self,mydir):
+    def configured_send(self,realname=''):
         ''' process to-be-sent messages processed by procmail
         '''
         raise NotImplementedError()
@@ -450,14 +450,14 @@ class Core(object):
         '''
         raise NotImplementedError()
 
-    def run(self, debug=True, blockThread=True):
+    def run(self, debug=True, blockThread=True,gname='groupgroup',mydir='',fwemail=True):
         ''' start auto respond
             for option
                 - debug: if set, debug info will be shown on screen
             it is defined in components/register.py
         '''
         raise NotImplementedError()
-    def runsend(self):
+    def runsend(self,mydir,timesfile):
         ''' start auto respond
             it is defined in components/register.py
         '''
