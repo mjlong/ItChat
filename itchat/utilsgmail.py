@@ -77,11 +77,11 @@ def writedir(emaildb,user,flname):
             f.write(flname);
     
 class mygmail:
-    def __init__(self):
+    def __init__(self, timesfile=''):
         self.emailcrd = file2dict('SESCRED');
         self.emaildb  = os.environ['EMAILDB'];
         self.downdir  = os.environ['DOWNDIR'];
-        self.slt = 0.2;
+        self.slt = 1;
 
     def send_txt(self,targets,subject,txtmsg):
         msg = MIMEText(txtmsg);
