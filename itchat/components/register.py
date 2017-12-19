@@ -294,7 +294,7 @@ def runsend(self,mydir="",timesfile=''):
                     realname = emaildbpath+filename;
                     userid,user,text,mtype = self.configured_send(realname);
                     os.remove(realname);
-
+                    time.sleep(tsend_mu+np.abs(np.random.randn())*tsend_sig);
                     if(None!=user):
                         if(userid in dictUserUids.keys()):
                             if('m'==mtype):
@@ -333,14 +333,14 @@ def runsend(self,mydir="",timesfile=''):
                             print('msg sent',(text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
                             send_txt('auto confirm', self.myname+'msg helper', \
                                      (text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
-                            time.sleep(tsend_mu+np.random.rand()*tsend_sig);
-                        time.sleep(    tsend_mu+np.random.rand()*tsend_sig);
+                            time.sleep(tsend_mu+np.abs(np.random.randn())*tsend_sig);
+                        time.sleep(    tsend_mu+np.abs(np.random.randn())*tsend_sig);
                     
                     t0 = time.clock();
                     dictUserMsgs = dict(); 
                     dictUserType = dict(); 
                     dictUserUids = dict(); 
-                time.sleep(tsend_mu+np.random.rand()*tsend_sig);               
+                time.sleep(tsend_mu+np.abs(np.random.randn())*tsend_sig);               
 
         except KeyboardInterrupt:
             if self.useHotReload:
