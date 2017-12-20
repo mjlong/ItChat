@@ -84,7 +84,11 @@ def msg2email(msg,senderType,myname='[]',fwemail=True):
             send_img(msg['User']['UserName'],\
                      myname+msg['User']['NickName'],\
                      pref,fileDir);
-        rvtext = [filedir2msg(fileDir)];
+        tmptxt = filedir2msg(fileDir);
+        if(unicode is type(tmptxt)):
+            tmptxt=tmptxt.encode('utf-8');
+            print('rare event happens, filename contains unicode');
+        rvtext = [tmptxt];
 
     if('Card'==mtype):
         rvtext = []
@@ -290,6 +294,17 @@ def runsend(self,mydir="",timesfile=''):
                 if([]!=messagefiles):
                     print('files to process:',messagefiles);
 
+                if(''!=timesfile):
+                    with open(timesfile) as f:
+                        timeparas = f.readlines();
+                    waitperiod = float(timeparas[0][:-1]); 
+                    tsend_mu   = float(timeparas[1][:-1]); 
+                    tsend_sig  = float(timeparas[2][:-1]);                   
+                else:
+                    waitperiod = 2; 
+                    tsend_mu   = 5; 
+                    tsend_sig  = 4;
+
                 for filename in messagefiles:
                     realname = emaildbpath+filename;
                     userid,user,text,mtype = self.configured_send(realname);
@@ -311,16 +326,6 @@ def runsend(self,mydir="",timesfile=''):
                             dictUserType[userid] = mtype;
                             dictUserMsgs[userid] = [text];
 
-                if(''!=timesfile):
-                    with open(timesfile) as f:
-                        timeparas = f.readlines();
-                    waitperiod = float(timeparas[0][:-1]); 
-                    tsend_mu   = float(timeparas[1][:-1]); 
-                    tsend_sig  = float(timeparas[2][:-1]);                   
-                else:
-                    waitperiod = 2; 
-                    tsend_mu   = 5; 
-                    tsend_sig  = 4;
 
 
                 t1 = time.clock();
