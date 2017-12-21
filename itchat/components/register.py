@@ -341,7 +341,7 @@ def runsend(self,mydir="",timesfile='',drysend=False):
                             time.sleep(tsend_mu+np.abs(np.random.randn())*tsend_sig);
 
                 t1 = time.clock();
-                if(drysend):
+                if(not drysend):
                     confirmMsg =['auto confirm','\n has been sent to\n'];
                 else:
                     confirmMsg =['For mannual forward','\n should have been sent to\n'];
