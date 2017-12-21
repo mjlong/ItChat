@@ -11,6 +11,9 @@ from ..storage import templates
 from .. import utilsgmail
 
 logger = logging.getLogger('itchat')
+sufgroup = '_groupfor'; 
+#append to emaildb filename to distinguish messages I want to send and messages I want to for(ward) among groups
+#email dbname follows the pattern datetime_len(8)letter therefore the '_groupfor' is guaranteed to not appear
 
 def load_register(core):
     core.auto_login       = auto_login
@@ -192,18 +195,18 @@ def configured_reply(self,emaildir):
                                 utilsgmail.writemsg(emaildir,g,             \
                                                     utilsgmail.dt.strftime( \
                                                         utilsgmail.dt.now(),'[%Y/%m/%d-%H:%M:%S]') \
-                                                    +msg['ActualNickName']+':');
+                                                    +msg['ActualNickName']+':',sufgroup);
                                 #self.send_msg(msg['ActualNickName']+':',toUserName=g);
                                 if('.gif'==rtxt[-4:]):
-                                    utilsgmail.writemsg(emaildir,g,'sticker unavailable'.decode('utf-8')); #make type str be type unicode
+                                    utilsgmail.writemsg(emaildir,g,'sticker unavailable'.decode('utf-8'),sufgroup); #make type str be type unicode
                                     #self.send('sticker unavailable', toUserName=g);
 
-                                utilsgmail.writedir(emaildir,g,rtxt[5:]);
+                                utilsgmail.writedir(emaildir,g,rtxt[5:],sufgroup);
                             else:
                                 print('writing text msg.........',rtxt);
                                 temp = utilsgmail.dt.strftime(utilsgmail.dt.now(),'[%Y/%m/%d-%H:%M:%S]')+rtxt;
                                 print('the msg is',temp);
-                                utilsgmail.writemsg(emaildir,g,temp );
+                                utilsgmail.writemsg(emaildir,g,temp,sufgroup );
                             #self.send(rtxt, toUserName=g);
         
             replyFn = self.functionDict['GroupChat'].get(msg['Type']);
@@ -309,27 +312,33 @@ def runsend(self,mydir="",timesfile='',drysend=False):
                     tsend_sig  = 4;
 
                 for filename in messagefiles:
+                    isForGroup = sufgroup in filename;
                     realname = emaildbpath+filename;
                     userid,user,text,mtype = self.configured_send(realname);
                     os.remove(realname);
                     time.sleep(tsend_mu+np.abs(np.random.randn())*tsend_sig);
                     if(None!=user):
-                        if(userid in dictUserUids.keys()):
-                            if('m'==mtype):
-                                if('m'== dictUserType[userid]): # last msg is also text msg, append to the last message of the user
-                                    dictUserMsgs[userid][-1]+='\n......\n'+text;
-                                else:                    # last msg is file msg, append as new message of the user
-                                    dictUserMsgs[userid].append(text); 
-                                dictUserType[userid]='m';
-                            else:                        # this msg is file msg, append as new message of the user
-                                dictUserMsgs[userid].append(text);
-                                dictUserType[userid]='d';
+                        if(isForGroup):
+                            if(userid in dictUserUids.keys()):
+                                if('m'==mtype):
+                                    if('m'== dictUserType[userid]): # last msg is also text msg, append to the last message of the user
+                                        dictUserMsgs[userid][-1]+='\n......\n'+text;
+                                    else:                    # last msg is file msg, append as new message of the user
+                                        dictUserMsgs[userid].append(text); 
+                                    dictUserType[userid]='m';
+                                else:                        # this msg is file msg, append as new message of the user
+                                    dictUserMsgs[userid].append(text);
+                                    dictUserType[userid]='d';
+                            else:
+                                dictUserUids[userid] = user;
+                                dictUserType[userid] = mtype;
+                                dictUserMsgs[userid] = [text];
+    
                         else:
-                            dictUserUids[userid] = user;
-                            dictUserType[userid] = mtype;
-                            dictUserMsgs[userid] = [text];
-
-
+                            user.send(text);
+                            send_txt('auto confrim', self.myname+'msg helper', \
+                                                    (text+'\n has been sent to \n'+user['NickName']).encode('utf-8'));
+                            time.sleep(tsend_mu+np.abs(np.random.randn())*tsend_sig);
 
                 t1 = time.clock();
                 if(drysend):
