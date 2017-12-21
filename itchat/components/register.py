@@ -264,7 +264,7 @@ def run(self, debug=False, blockThread=True,gname='groupgroup',mydir='',fwemail=
                             self.g2ind[gidn] = ig;
                             gids.append(gidn);
                     self.ggids.append(gids);
-                    print(gids)
+                    #print(gids)
                     ig+=1;
             
                 self.configured_reply(os.environ['EMAILDB']+mydir)
@@ -282,7 +282,7 @@ def run(self, debug=False, blockThread=True,gname='groupgroup',mydir='',fwemail=
         replyThread.setDaemon(True)
         replyThread.start()
 
-def runsend(self,mydir="",timesfile='',drysend=False):
+def runsend(self,mydir="",timesfile='',drysend=False,eastereggfile=''):
     logger.info('Start auto sending.')
     self.myname = '[%s]'%self.memberList[0]['NickName'];
     def reply_fn():
@@ -324,7 +324,7 @@ def runsend(self,mydir="",timesfile='',drysend=False):
                             if(userid in dictUserUids.keys()):
                                 if('m'==mtype):
                                     if('m'== dictUserType[userid]): # last msg is also text msg, append to the last message of the user
-                                        dictUserMsgs[userid][-1]+='\n......\n'+text;
+                                        dictUserMsgs[userid][-1]+='\n.....[this is separation line]......\n'+text;
                                     else:                    # last msg is file msg, append as new message of the user
                                         dictUserMsgs[userid].append(text); 
                                     dictUserType[userid]='m';
@@ -352,11 +352,18 @@ def runsend(self,mydir="",timesfile='',drysend=False):
                     for userid in dictUserUids.keys():
                         user = dictUserUids[userid];
                         for text in dictUserMsgs[userid]:
+                            if(''!=eastereggfile):
+                                with open(eastereggfile) as f:
+                                    easterEggs = f.readlines();
+                                pickedEgg = easterEggs[np.random.randint(len(easterEggs))].decode('utf-8');
+                                pickedEgg = '\n ..... this is Easter Egg ........\n'+pickedEgg; 
+                            else:
+                                pickedEgg = '';
                             if(not drysend):
-                                user.send(text);
+                                user.send(text+pickedEgg);
                             print('msg sent',(text+confirmMsg[1]+user['NickName']).encode('utf-8'));
                             send_txt(confirmMsg[0], self.myname+'msg helper', \
-                                     (text+confirmMsg[1]+user['NickName']).encode('utf-8'));
+                                     (text+pickedEgg+confirmMsg[1]+user['NickName']).encode('utf-8'));
                             time.sleep(tsend_mu+np.abs(np.random.randn())*tsend_sig);
                         time.sleep(    tsend_mu+np.abs(np.random.randn())*tsend_sig);
                     
