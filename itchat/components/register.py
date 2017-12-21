@@ -240,31 +240,33 @@ def msg_register(self, msgType, isFriendChat=False, isGroupChat=False, isMpChat=
 
 def run(self, debug=False, blockThread=True,gname='groupgroup',mydir='',fwemail=True):
     self.myname = '[%s]'%self.memberList[0]['NickName'];
-    ggs = readgg(gname);
-    self.ggids = [];
     self.fwemail = fwemail;
-    self.g2ind = dict();
-    ig = 0;
-    for gg in ggs:
-        gids = [];
-        for g in gg:
-            gid = self.search_chatrooms(name=g);
-            if([]==gid):
-                print('Warning! '+g+' not found');
-            else:
-                gidn = gid[0]['UserName'];
-                self.g2ind[gidn] = ig;
-                gids.append(gidn);
-        self.ggids.append(gids);
-        print(gids)
-        ig+=1;
-
     logger.info('Start auto forwarding.')
     if debug:
         set_logging(loggingLevel=logging.DEBUG)
     def reply_fn():
         try:
             while self.alive:
+
+                ggs = readgg(gname);
+                self.ggids = [];
+                self.g2ind = dict();
+
+                ig = 0;
+                for gg in ggs:
+                    gids = [];
+                    for g in gg:
+                        gid = self.search_chatrooms(name=g);
+                        if([]==gid):
+                            print('Warning! '+g+' not found');
+                        else:
+                            gidn = gid[0]['UserName'];
+                            self.g2ind[gidn] = ig;
+                            gids.append(gidn);
+                    self.ggids.append(gids);
+                    print(gids)
+                    ig+=1;
+            
                 self.configured_reply(os.environ['EMAILDB']+mydir)
                 time.sleep(1.5+np.random.rand());
         except KeyboardInterrupt:
