@@ -58,19 +58,19 @@ def ts_generator():
 def nm_generator():
     return '%s_%s'%(ts_generator(),id_generator());
 
-def writemsg(emaildb,user,text):
+def writemsg(emaildb,user,text,sufix=''):
     dbdirs = os.listdir(emaildb);
     for dbdir in dbdirs:
-        dbname = emaildb+dbdir+'/'+nm_generator();
+        dbname = emaildb+dbdir+'/'+nm_generator()+sufix;
         with io.open(dbname,'w',encoding='utf-8') as f:
             f.write(('wechat msg:'+user+'\n').decode('utf-8'));
             f.write(('|type:m|\n').decode('utf-8'));
             f.write(text);
 
-def writedir(emaildb,user,flname):
+def writedir(emaildb,user,flname,sufix=''):
     dbdirs = os.listdir(emaildb);
     for dbdir in dbdirs:
-        dbname = emaildb+dbdir+'/'+nm_generator();
+        dbname = emaildb+dbdir+'/'+nm_generator()+sufix;
         with open(dbname,'w') as f:
             f.write('wechat msg:'+user+'\n');
             f.write('|type:d|\n');
