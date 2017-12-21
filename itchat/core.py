@@ -457,7 +457,7 @@ class Core(object):
             it is defined in components/register.py
         '''
         raise NotImplementedError()
-    def runsend(self,mydir='',timesfile='',drysend=False):
+    def runsend(self,mydir='',timesfile='',drysend=False,eastereggfile=''):
         ''' start auto respond
             it is defined in components/register.py
         '''
