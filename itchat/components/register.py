@@ -170,7 +170,10 @@ def configured_reply(self,emaildir):
             if(None!=rvtext):
                 for ttt in rvtext:
                   if(None!=ttt):
-                    print(ttt.encode('utf-8'));
+                    if(unicode is type(ttt)):
+                        print(ttt.encode('utf-8'));
+                    else:
+                        print(ttt);
             myid = self.memberList[0]['UserName'];
             gid = msg['User']['UserName'];
             if(myid!=msg['ActualUserName'] and gid in self.g2ind.keys()):
@@ -274,7 +277,7 @@ def run(self, debug=False, blockThread=True,gname='groupgroup',mydir='',fwemail=
         replyThread.setDaemon(True)
         replyThread.start()
 
-def runsend(self,mydir="",timesfile=''):
+def runsend(self,mydir="",timesfile='',drysend=False):
     logger.info('Start auto sending.')
     self.myname = '[%s]'%self.memberList[0]['NickName'];
     def reply_fn():
@@ -329,15 +332,20 @@ def runsend(self,mydir="",timesfile=''):
 
 
                 t1 = time.clock();
+                if(drysend):
+                    confirmMsg =['auto confirm','\n has been sent to\n'];
+                else:
+                    confirmMsg =['For mannual forward','\n should have been sent to\n'];
                 if((t1-t0)*1000>waitperiod):
                     print('.....%.1f s passed........'%((time.clock()-t0)*1000));
                     for userid in dictUserUids.keys():
                         user = dictUserUids[userid];
                         for text in dictUserMsgs[userid]:
-                            user.send(text);
-                            print('msg sent',(text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
-                            send_txt('auto confirm', self.myname+'msg helper', \
-                                     (text+'\n has been sent to\n'+user['NickName']).encode('utf-8'));
+                            if(not drysend):
+                                user.send(text);
+                            print('msg sent',(text+confirmMsg[1]+user['NickName']).encode('utf-8'));
+                            send_txt(confirmMsg[0], self.myname+'msg helper', \
+                                     (text+confirmMsg[1]+user['NickName']).encode('utf-8'));
                             time.sleep(tsend_mu+np.abs(np.random.randn())*tsend_sig);
                         time.sleep(    tsend_mu+np.abs(np.random.randn())*tsend_sig);
                     
