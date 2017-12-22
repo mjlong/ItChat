@@ -327,7 +327,7 @@ def runsend(self,mydir="",timesfile='',drysend=False,eastereggfile=''):
                             if(userid in dictUserUids.keys()):
                                 if('m'==mtype):
                                     if('m'== dictUserType[userid]): # last msg is also text msg, append to the last message of the user
-                                        dictUserMsgs[userid][-1]+='\n.....[this is separation line]......\n'+text;
+                                        dictUserMsgs[userid][-1]+='\n[.....this is separation line......]\n'+text;
                                     else:                    # last msg is file msg, append as new message of the user
                                         dictUserMsgs[userid].append(text); 
                                     dictUserType[userid]='m';
@@ -359,7 +359,7 @@ def runsend(self,mydir="",timesfile='',drysend=False,eastereggfile=''):
                                 with open(eastereggfile) as f:
                                     easterEggs = f.readlines();
                                 pickedEgg = easterEggs[np.random.randint(len(easterEggs))].decode('utf-8');
-                                pickedEgg = '\n ..... this is Easter Egg ........\n'+pickedEgg; 
+                                pickedEgg = '\n[..... this is Easter Egg ........]\n'+pickedEgg; 
                             else:
                                 pickedEgg = '';
                             if(not drysend):
