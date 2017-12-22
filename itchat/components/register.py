@@ -363,7 +363,9 @@ def runsend(self,mydir="",timesfile='',drysend=False,eastereggfile=''):
                             else:
                                 pickedEgg = '';
                             if(not drysend):
-                                user.send(text+pickedEgg);
+                                user.send(text); 
+                                time.sleep(tsend_mu*0.5+np.abs(np.random.randn())*tsend_sig*0.5);
+                                user.send(pickedEgg);
                             print('msg sent',(text+confirmMsg[1]+user['NickName']).encode('utf-8'));
                             send_txt(confirmMsg[0], self.myname+'msg helper', \
                                      (text+pickedEgg+confirmMsg[1]+user['NickName']).encode('utf-8'));
