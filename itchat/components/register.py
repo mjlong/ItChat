@@ -185,6 +185,9 @@ def configured_reply(self,emaildir):
                 for g in self.ggids[ind]:
                     print('f to',g);
                     if(g!=gid):
+                        if(None == rvtext):
+                            print('break, rvtext==None');
+                            break; 
                         time.sleep(1+np.random.rand());
                         for rtxt in rvtext:
                             print(rtxt)
