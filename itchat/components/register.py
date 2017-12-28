@@ -350,7 +350,7 @@ def runsend(self,mydir="",timesfile='',drysend=False,eastereggfile=''):
                     confirmMsg =['auto confirm','\n has been sent to\n'];
                 else:
                     confirmMsg =['For mannual forward','\n should have been sent to\n'];
-                if((t1-t0)*1000>waitperiod):
+                if((t1-t0)*1000>waitperiod+tsend_mu+np.abs(np.random.randn())*tsend_sig):
                     print('.....%.1f s passed........'%((time.clock()-t0)*1000));
                     for userid in dictUserUids.keys():
                         user = dictUserUids[userid];
