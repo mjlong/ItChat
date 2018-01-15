@@ -33,6 +33,7 @@ for k in ('UniFriend', 'Sex', 'AppAccountFlag', 'VerifyFlag', 'ChatRoomId', 'Hid
     friendInfoTemplate[k] = 0
 friendInfoTemplate['MemberList'] = []
 
+# read grouped groups
 def readgg(fname):
     f = io.open(fname,'r',encoding='utf-8');
     nns = [];
@@ -46,6 +47,16 @@ def readgg(fname):
                 nns.append(temp);
             else:
                 temp.append(line);
+    f.close();
+    return nns;
+
+# read archived groups
+def readag(fname):
+    f = io.open(fname,'r',encoding='utf-8');
+    nns = [];
+    for l in f:
+        line = (l.encode('utf-8').strip()).decode('utf-8');
+        nns.append(line);
     f.close();
     return nns;
 

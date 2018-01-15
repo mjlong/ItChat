@@ -6,7 +6,7 @@ except ImportError:
     import queue as Queue
 
 from ..log import set_logging
-from ..utils import test_connect,send_txt,send_img,readgg
+from ..utils import test_connect,send_txt,send_img,readgg,readag
 from ..storage import templates
 from .. import utilsgmail
 
@@ -166,7 +166,7 @@ def configured_reply(self,emaildir):
             msg2email(msg,3,self.myname,self.fwemail);
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
         elif isinstance(msg['User'], templates.Chatroom):
-            rvtext = msg2email(msg,2,self.myname,self.fwemail);
+            rvtext = msg2email(msg,2,self.myname,self.fwemail and not (msg['User']['UserName'] in self.agids));
             if(None!=rvtext and 2<len(rvtext)):
                 rvtext = rvtext[:2];
             print(rvtext);
@@ -241,7 +241,7 @@ def msg_register(self, msgType, isFriendChat=False, isGroupChat=False, isMpChat=
         return fn
     return _msg_register
 
-def run(self, debug=False, blockThread=True,gname='groupgroup',mydir='',fwemail=True):
+def run(self, debug=False, blockThread=True,gname='groupgroup',aname='agroup',mydir='',fwemail=True):
     self.myname = '[%s]'%self.memberList[0]['NickName'];
     self.fwemail = fwemail;
     logger.info('Start auto forwarding.')
@@ -269,7 +269,17 @@ def run(self, debug=False, blockThread=True,gname='groupgroup',mydir='',fwemail=
                     self.ggids.append(gids);
                     #print(gids)
                     ig+=1;
-            
+
+                ags = readag(aname);
+                self.agids = [];
+                for g in ags:
+                  gid = self.search_chatrooms(name=g);
+                  if([]==gid):
+                      print('Warning! '+g+' not found');
+                  else:
+                      self.agids = gid[0]['UserName'];
+
+          
                 self.configured_reply(os.environ['EMAILDB']+mydir)
                 time.sleep(1.5+np.random.rand());
         except KeyboardInterrupt:
@@ -368,7 +378,7 @@ def runsend(self,mydir="",timesfile='',drysend=False,eastereggfile=''):
                                 time.sleep(tsend_mu*0.5+np.abs(np.random.randn())*tsend_sig*0.5);
 
                             print('msg sent',(text+confirmMsg[1]+user['NickName']).encode('utf-8'));
-                            send_txt(confirmMsg[0], self.myname+'msg helper', \
+                            send_txt(confirmMsg[0], self.myname+'-->['+user['NickName']+']'+'msg helper', \
                                      (text+confirmMsg[1]+user['NickName']).encode('utf-8'));
                             time.sleep(tsend_mu+np.abs(np.random.randn())*tsend_sig);
                         if(not drysend):
