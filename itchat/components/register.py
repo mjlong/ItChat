@@ -261,7 +261,7 @@ def run(self, debug=False, blockThread=True,gname='groupgroup',aname='agroup',my
                     for g in gg:
                         gid = self.search_chatrooms(name=g);
                         if([]==gid):
-                            print('Warning! '+g+' not found');
+                            print('gWarning! '+g+' not found');
                         else:
                             gidn = gid[0]['UserName'];
                             self.g2ind[gidn] = ig;
@@ -275,9 +275,9 @@ def run(self, debug=False, blockThread=True,gname='groupgroup',aname='agroup',my
                 for g in ags:
                   gid = self.search_chatrooms(name=g);
                   if([]==gid):
-                      print('Warning! '+g+' not found');
+                      print('aWarning! '+g+' not found');
                   else:
-                      self.agids = gid[0]['UserName'];
+                      self.agids.append(gid[0]['UserName']);
 
           
                 self.configured_reply(os.environ['EMAILDB']+mydir)
