@@ -337,7 +337,7 @@ def runsend(self,mydir="",timesfile='',drysend=False,eastereggfile=''):
                             if(userid in dictUserUids.keys()):
                                 if('m'==mtype):
                                     if('m'== dictUserType[userid]): # last msg is also text msg, append to the last message of the user
-                                        dictUserMsgs[userid][-1]+='\n[.....this is separation line......]\n'+text;
+                                        dictUserMsgs[userid][-1]+='\n[.....this is separation line....'+userid+'......]\n'+text;
                                     else:                    # last msg is file msg, append as new message of the user
                                         dictUserMsgs[userid].append(text); 
                                     dictUserType[userid]='m';
@@ -378,7 +378,7 @@ def runsend(self,mydir="",timesfile='',drysend=False,eastereggfile=''):
                                 time.sleep(tsend_mu*0.5+np.abs(np.random.randn())*tsend_sig*0.5);
 
                             print('msg sent',(text+confirmMsg[1]+user['NickName']).encode('utf-8'));
-                            send_txt(confirmMsg[0], self.myname+'-->['+user['NickName']+']'+'msg helper', \
+                            send_txt(confirmMsg[0]+'('+userid, self.myname+'-->['+user['NickName']+']'+'msg helper', \
                                      (text+confirmMsg[1]+user['NickName']).encode('utf-8'));
                             time.sleep(tsend_mu+np.abs(np.random.randn())*tsend_sig);
                         if(not drysend):

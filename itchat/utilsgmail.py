@@ -220,8 +220,8 @@ class mygmail:
                     msg = email.message_from_string(data[0][1]);
                     uid_max = uid;
                     subj,encoding = email.Header.decode_header(msg['Subject'])[0];
-                    ind1 = subj.find('(');
-                    ind2 = subj.find(')');
+                    ind1 = subj.rfind('(');
+                    ind2 = subj.rfind(')');
                     username = subj[ind1+1:ind2].replace('#','@');
                     print('New message from ',username);
                     self.get_first_text_block(username,msg);
