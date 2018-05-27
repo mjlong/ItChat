@@ -1,4 +1,4 @@
-import time,os,logging, traceback, sys, threading,requests
+import time,os,shutil,logging, traceback, sys, threading,requests
 import numpy as np
 try:
     import Queue
@@ -88,9 +88,9 @@ def msg2email(msg,senderType,myname='[]',fwemail=True):
                      myname+msg['User']['NickName'],\
                      pref,fileDir);
         tmptxt = filedir2msg(fileDir);
-        if(unicode is type(tmptxt)):
-            tmptxt=tmptxt.encode('utf-8');
-            print('rare event happens, filename contains unicode');
+        #curretnly, filedir is pure text, textmessage supports unicode
+        #filedir2msg always return puretext by renaming 
+        #the filename with unicode to ascii names
         rvtext = [tmptxt];
 
     if('Card'==mtype):
@@ -192,6 +192,8 @@ def configured_reply(self,emaildir):
                         for rtxt in rvtext:
                             print(rtxt)
                             print(type(rtxt))
+                            #if the rare even happends, filename contains unicode
+                            #rtxt contains non-ASCII char and will exit
                             print('send--->'+rtxt.encode('utf-8'));
 
                             if(str is type(rtxt)): #rtxt is str (thus file path and username is not included), 
@@ -242,6 +244,8 @@ def msg_register(self, msgType, isFriendChat=False, isGroupChat=False, isMpChat=
     return _msg_register
 
 def run(self, debug=False, blockThread=True,gname='groupgroup',aname='agroup',mydir='',fwemail=True):
+#fwemail decides whether to forward discussion to email; 
+#it is useful when an instance is launched only for group forwarding 
     self.myname = '[%s]'%self.memberList[0]['NickName'];
     self.fwemail = fwemail;
     logger.info('Start auto forwarding.')
@@ -296,6 +300,9 @@ def run(self, debug=False, blockThread=True,gname='groupgroup',aname='agroup',my
         replyThread.start()
 
 def runsend(self,mydir="",timesfile='',drysend=False,eastereggfile=''):
+    #drysend applies to group forward
+    #true: send messages to gmail, marked with '... should have been sent to groups xxx'
+    #false:do real group forwarding
     logger.info('Start auto sending.')
     self.myname = '[%s]'%self.memberList[0]['NickName'];
     def reply_fn():
@@ -399,7 +406,15 @@ def runsend(self,mydir="",timesfile='',drysend=False,eastereggfile=''):
             logger.info('Bye~')
     reply_fn()
 
-def filedir2msg(fileDir):
+def filedir2msg(fileDiri):
+    tmprt = fileDiri;
+    if(unicode is type(tmprt)):  
+        tmprt = tmprt.encode('utf-8');
+        sls = tmprt.rfind('/');   
+        dot = tmprt.rfind('.');
+        tmprt = tmprt[:sls+1] + utilsgmail.nm_generator() + tmprt[dot:];
+        shutil.copyfile(fileDiri,tmprt)
+    fileDir = tmprt
     dot = fileDir.rfind('.');
     ftype = fileDir[dot+1:];
     prefix = '@fil@';
@@ -408,6 +423,7 @@ def filedir2msg(fileDir):
     if('mp4'==ftype):
         prefix = '@vid@';
     return prefix+fileDir;
+     
 
 import io
 def configured_send(self,realname):
