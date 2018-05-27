@@ -161,6 +161,8 @@ class mygmail:
                     filecontent = part.get_payload(decode=True);
                     open(flpre+flname,'wb').write(filecontent);
                     flname = flpre+nm_generator()+flname[inddot:];
+#totally discard original file name (from email) except extension after last dot
+#to avoid unicode filenames
                     open(flname,'wb').write(filecontent);
                     writedir(self.emaildb,user,flname);
         elif type == 'text':
