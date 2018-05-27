@@ -165,6 +165,8 @@ class mygmail:
                     writedir(self.emaildb,user,flname);
         elif type == 'text':
             text =  msg.get_payload(decode=True).decode(msg.get_content_charset());
+            print('writing txt msg');
+            writemsg(self.emaildb,user,text);
         if(None==text):
             rv = None;
         else:
@@ -219,7 +221,9 @@ class mygmail:
                     rv, data = server.uid('fetch', uid, '(RFC822)')  # fetch entire message
                     msg = email.message_from_string(data[0][1]);
                     uid_max = uid;
-                    subj,encoding = email.Header.decode_header(msg['Subject'])[0];
+                    subj,encoding = email.Header.decode_header(msg['Subject'])[-1];
+                    #for a message sent by web gmail, len(sub)=1, 
+                    #for a message send by gnus, subj seems to be breaked by '\r', the last one contains '(userid)' 
                     ind1 = subj.rfind('(');
                     ind2 = subj.rfind(')');
                     username = subj[ind1+1:ind2].replace('#','@');
